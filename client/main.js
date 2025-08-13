@@ -64,6 +64,73 @@ class Utils {
 		return extracted_files;
 	}
 }
+class AssetManager {
+	constructor() {
+		/** @type {{ definitions: { tile: Object<string, { collisionType: "none" | "normal" | "wall", canSeeThrough: boolean }> }, textures: Object<string, Object<string, Surface>> }} */
+		this.assets = {
+			"definitions": {
+				"tile": {}
+			},
+			"textures": {
+				"tile": {}
+			}
+		}
+	}
+	/**
+	 * @param {Object<string, ArrayBuffer>} files
+	 * @returns {Promise<void[]>}
+	 */
+	importAssets(files) {
+		/** @type {Promise<void>[]} */
+		var promises = []
+		for (var _filename of Object.keys(files)) {
+			let fileData = files[_filename]
+			let filename = _filename.split(".")[0].split("/")
+			// Different handling for textures
+			if (filename[0] == "textures") {
+				let registry = this.assets.textures
+				promises.push(Surface.fromArrayBufferPNG(fileData).then((surface) => {
+					registry[filename[1]][filename[2]] = surface
+				}))
+			} else if (filename[0] == "definitions") {
+				if (filename[1] == "tile") {
+					const decoder = new TextDecoder('utf-8')
+					this.assets.definitions.tile[filename[2]] = JSON.parse(decoder.decode(fileData))
+				} else {
+					console.error("Unknown definition type for filename:", _filename, fileData)
+				}
+			} else {
+				console.error("Unknown asset type for filename:", _filename, fileData)
+			}
+		}
+		return Promise.all(promises)
+	}
+}
+
+class Game {
+	/** @param {Main} main */
+	constructor(main) {
+		this.main = main
+		this.level = [["none"]]
+		this.assets = new AssetManager()
+	}
+	/**
+	 * @param {number} xSize
+	 * @param {number} ySize
+	 */
+	setLevelSize(xSize, ySize) {
+		this.level = []
+		for (var y = 0; y < ySize; y++) {
+			/** @type {string[]} */
+			var column = []
+			this.level.push(column)
+			for (var x = 0; x < xSize; x++) {
+				var cell = "none"
+				column.push(cell)
+			}
+		}
+	}
+}
 
 class Main {
 	static async main() {
@@ -76,26 +143,24 @@ class Main {
 		// @ts-ignore
 		window.main = main
 	}
-	/**
-	 * @param {string} clientID
-	 */
+	/** @param {string} clientID */
 	constructor(clientID) {
 		this.clientID = clientID;
 		/** @type {string[][]} */
 		this.messageQueue = [];
-		/** @type {Object<string, ArrayBuffer>} */
-		this.assets = {};
+		// create game
+		this.game = new Game(this)
 	}
 	async getAssetDataFromServer() {
 		var blob = await Utils.getBinary("/data.zip");
 		var assets = await Utils.unzipZipFile(blob);
-		this.assets = assets;
+		this.game.assets.importAssets(assets)
 	}
 	async getMessagesFromServer() {
 		var messages = JSON.parse(await Utils.get("/get_messages/" + this.clientID));
 		// No message
 		if (messages.length == 0) {
-			setTimeout(this.getMessagesFromServer.bind(this), 1000);
+			setTimeout(this.getMessagesFromServer.bind(this), 3000);
 			return;
 		}
 		// Handle message
@@ -117,6 +182,12 @@ class Main {
 	async handleMessage(message) {
 		if (message[0] == "log") {
 			for (var m of message.slice(1)) console.log(m)
+		} else if (message[0] == "level_size") {
+			var xSize = Number(message[1])
+			var ySize = Number(message[2])
+			this.game.setLevelSize(xSize, ySize)
+		} else {
+			console.log("Unknown message!", message)
 		}
 	}
 }

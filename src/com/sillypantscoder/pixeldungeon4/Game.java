@@ -44,6 +44,13 @@ public class Game {
 			}
 			messages.get(playerID).add(data);
 		}
+		{
+			messages.get(playerID).add(new String[] {
+				"level_size",
+				String.valueOf(level.tiles.length),
+				String.valueOf(level.tiles[0].length)
+			});
+		}
 		// Save player ID
 		return playerID;
 	}

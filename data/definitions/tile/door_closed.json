@@ -1,5 +1,5 @@
 {
 	"$schema": "../../../schemas/tile_definition.json",
-	"collisionType": "wall",
+	"collisionType": "normal",
 	"canSeeThrough": false
 }

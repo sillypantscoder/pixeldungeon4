@@ -7,9 +7,11 @@ import com.sillypantscoder.utils.JSON;
 import com.sillypantscoder.utils.Utils;
 
 public class TileType {
-	public CollisionType type;
-	public TileType(CollisionType type) {
-		this.type = type;
+	public CollisionType collisionType;
+	public boolean canSeeThrough;
+	public TileType(CollisionType collisionType, boolean canSeeThrough) {
+		this.collisionType = collisionType;
+		this.canSeeThrough = canSeeThrough;
 	}
 	public static enum CollisionType {
 		NONE, NORMAL, WALL
@@ -20,12 +22,15 @@ public class TileType {
 		for (String name : new File("data/definitions/tile").list()) {
 			JSON.JObject<?> object = JSON.JObject.parse(Utils.readFile("data/definitions/tile/" + name));
 			// Unpack JSON object
-			String typeString = object.get("type", JSON.JString.class).s;
+			// - Collision type
+			String collisionTypeString = object.get("type", JSON.JString.class).s;
 			CollisionType collisionType = CollisionType.NONE;
-			if (typeString == "normal") collisionType = CollisionType.NORMAL;
-			if (typeString == "wall") collisionType = CollisionType.WALL;
+			if (collisionTypeString == "normal") collisionType = CollisionType.NORMAL;
+			if (collisionTypeString == "wall") collisionType = CollisionType.WALL;
+			// - Can see through
+			boolean canSeeThrough = object.get("canSeeThrough", JSON.JBoolean.class).b;
 			// Assemble TileType object
-			TileType type = new TileType(collisionType);
+			TileType type = new TileType(collisionType, canSeeThrough);
 			types.put(name, type);
 		}
 		return types;

@@ -14,6 +14,7 @@ public class MainServer extends HttpServer.RequestHandler {
 	}
 	public HttpResponse get(String path) {
 		if (path.equals("/")) return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/html").setBody(Utils.readFile("client/index.html"));
+		if (path.equals("/graphics.js")) return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/javascript").setBody(Utils.readFile("client/graphics.js"));
 		if (path.equals("/zip.min.js")) return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/javascript; charset=utf-8").setBody(Utils.readFile("client/zip.min.js"));
 		if (path.equals("/main.js")) return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/javascript").setBody(Utils.readFile("client/main.js"));
 		if (path.startsWith("/get_messages/")) {

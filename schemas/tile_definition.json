@@ -2,12 +2,16 @@
 	"$schema": "https://json-schema.org/draft-07/schema#",
 	"type": "object",
 	"properties": {
-		"type": {
+		"collisionType": {
 			"type": "string",
 			"enum": ["none", "normal", "wall"]
+		},
+		"canSeeThrough": {
+			"type": "boolean"
 		}
 	},
 	"required": [
-		"type"
+		"collisionType",
+		"canSeeThrough"
 	]
 }

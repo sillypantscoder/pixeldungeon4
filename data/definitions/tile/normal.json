@@ -1,4 +1,5 @@
 {
 	"$schema": "../../../schemas/tile_definition.json",
-	"type": "normal"
+	"collisionType": "normal",
+	"canSeeThrough": true
 }
