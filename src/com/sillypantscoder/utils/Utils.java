@@ -2,6 +2,7 @@ package com.sillypantscoder.utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -74,6 +75,24 @@ public class Utils {
 	}
 	public static String readFile(String filename) {
 		return readFile(new File(filename));
+	}
+	public static byte[] readFileBinary(File file) {
+		FileInputStream stream = null;
+		try {
+			stream = new FileInputStream(file);
+			return stream.readAllBytes();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (stream != null) stream.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return new byte[0];
 	}
 	public static String getResource(String filename) {
 		return readFile(AssetLoader.getResource(filename));

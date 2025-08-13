@@ -1,9 +1,10 @@
 package com.sillypantscoder.pixeldungeon4;
 
-import java.util.Optional;
+import java.util.ArrayList;
 
 import com.sillypantscoder.http.HttpResponse;
 import com.sillypantscoder.http.HttpServer;
+import com.sillypantscoder.utils.JSON;
 import com.sillypantscoder.utils.Utils;
 
 public class MainServer extends HttpServer.RequestHandler {
@@ -13,18 +14,18 @@ public class MainServer extends HttpServer.RequestHandler {
 	}
 	public HttpResponse get(String path) {
 		if (path.equals("/")) return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/html").setBody(Utils.readFile("client/index.html"));
+		if (path.equals("/zip.min.js")) return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/javascript; charset=utf-8").setBody(Utils.readFile("client/zip.min.js"));
 		if (path.equals("/main.js")) return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/javascript").setBody(Utils.readFile("client/main.js"));
-		if (path.startsWith("/get_message/")) {
+		if (path.startsWith("/get_messages/")) {
 			String playerID = path.split("/")[2];
 			if (! game.messages.containsKey(playerID)) return new HttpResponse().setStatus(400).setBody("That player is not logged in");
-			Optional<String> message = game.getPlayerMessage(playerID);
-			HttpResponse res = new HttpResponse().setStatus(200).addHeader("Content-Type", "text/plain");
-			message.ifPresentOrElse((v) -> {
-				res.setBody(v);
-			}, () -> {
-				res.setBody("");
-			});
-			return res;
+			ArrayList<String[]> messages = game.messages.get(playerID);
+			game.messages.put(playerID, new ArrayList<String[]>());
+			return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/plain").setBody(JSON.make2DStringList(messages).toString());
+		}
+		if (path.equals("/data.zip")) {
+			byte[] zipData = Utils.zipFiles(game.getAllData());
+			return new HttpResponse().setStatus(200).addHeader("Content-Type", "application/zip").setBody(zipData);
 		}
 		return new HttpResponse().setStatus(404).setBody("File not found");
 	}

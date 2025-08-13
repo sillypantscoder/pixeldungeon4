@@ -1,0 +1,4 @@
+{
+	"$schema": "../../../schemas/tile_definition.json",
+	"type": "normal"
+}
