@@ -25,4 +25,7 @@ public class Random {
 		}
 		return items;
 	}
+	public static long randomLong() {
+		return r.nextLong();
+	}
 }

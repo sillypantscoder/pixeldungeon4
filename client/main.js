@@ -114,6 +114,63 @@ class AssetManager {
 		if (asset == undefined) throw new Error(`Missing asset: Texture for ${type}/${id}`)
 		return asset
 	}
+	/**
+	 * @param {{ type: string} & Object<string, any>} entity_data
+	 */
+	deserializeEntity(entity_data) {
+		if (entity_data.type == "player") {
+			var entity = new Player(entity_data.id, entity_data.x, entity_data.y, entity_data.health, entity_data.maxHealth);
+			return entity
+		}
+		throw new Error("Entity type not found: " + JSON.stringify(entity_data))
+	}
+}
+
+class Entity {
+	/**
+	 * @param {number} id
+	 * @param {number} x
+	 * @param {number} y
+	 */
+	constructor(id, x, y) {
+		this.id = id
+		this.x = x
+		this.y = y
+		this.displayX = x
+		this.displayY = y
+	}
+	/**
+	 * @abstract
+	 * @returns {string}
+	 */
+	getEntityID() { throw new Error("`Entity` is an abstract class, `getID` must be overridden"); }
+}
+class LivingEntity extends Entity {
+	/**
+	 * @param {number} id
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} health
+	 * @param {number} maxHealth
+	 */
+	constructor(id, x, y, health, maxHealth) {
+		super(id, x, y)
+		this.health = health
+		this.maxHealth = maxHealth
+	}
+}
+class Player extends LivingEntity {
+	/**
+	 * @param {number} id
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} health
+	 * @param {number} maxHealth
+	 */
+	constructor(id, x, y, health, maxHealth) {
+		super(id, x, y, health, maxHealth)
+	}
+	getEntityID() { return "player" }
 }
 
 /** @typedef {{ state: string, visibility: 0 | 1 | 2 }} TileState */
@@ -123,6 +180,8 @@ class Game {
 		this.main = main
 		/** @type {TileState[][]} */
 		this.level = [[{ state: "none", visibility: 0 }]]
+		/** @type {Entity[]} */
+		this.entities = []
 		this.assets = new AssetManager()
 	}
 	/**
@@ -166,9 +225,9 @@ class Rendering {
 	 * @param {AssetManager} assetManager
 	 */
 	static renderTiles(level, assetManager) {
-		var s = new Surface(level[0].length * this.TILE_SIZE, level.length * this.TILE_SIZE, "black");
-		for (var x = 0; x < level[0].length; x++) {
-			for (var y = 0; y < level.length; y++) {
+		var s = new Surface(level.length * this.TILE_SIZE, level[0].length * this.TILE_SIZE, "black");
+		for (var x = 0; x < level.length; x++) {
+			for (var y = 0; y < level[0].length; y++) {
 				var tile = level[x][y]
 				var tileImage = assetManager.getTexture("tile", tile.state)
 				s.blit(tileImage, x * this.TILE_SIZE, y * this.TILE_SIZE)
@@ -242,6 +301,9 @@ class Main {
 			this.game.setLevelSize(xSize, ySize)
 		} else if (message[0] == "show_tiles") {
 			this.game.showTiles(message.slice(1))
+		} else if (message[0] == "create_entity") {
+			var entity = this.game.assets.deserializeEntity(JSON.parse(message[1]))
+			this.game.entities.push(entity)
 		} else {
 			console.log("Unknown message!", message)
 		}

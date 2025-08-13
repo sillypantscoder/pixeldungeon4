@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.sillypantscoder.pixeldungeon4.entities.Entity;
+import com.sillypantscoder.pixeldungeon4.entities.Player;
+import com.sillypantscoder.pixeldungeon4.entities.TileEntity;
 import com.sillypantscoder.pixeldungeon4.level.Level;
 import com.sillypantscoder.pixeldungeon4.level.SubdivisionLevelGeneration;
 import com.sillypantscoder.utils.Random;
@@ -19,32 +22,11 @@ public class Game {
 	}
 	public String loginPlayer() {
 		// Get player ID
-		String playerID = "P" + Random.randint(1, 10000000);
+		String playerID = "P" + Random.randomLong();
 		// Messages
 		messages.put(playerID, new ArrayList<String[]>());
-		// {
-		// 	String[] data = new String[level.tiles[0].length + 1];
-		// 	data[0] = "log";
-		// 	for (int y = 0; y < level.tiles[0].length; y++) {
-		// 		String row = "";
-		// 		for (int x = 0; x < level.tiles.length; x++) {
-		// 			switch (level.tiles[x][y].state) {
-		// 				case "normal":
-		// 					row += "__";
-		// 					break;
-		// 				case "wall":
-		// 					row += "##";
-		// 					break;
-		// 				case "door":
-		// 					row += "][";
-		// 					break;
-		// 			}
-		// 		}
-		// 		data[y + 1] = row;
-		// 	}
-		// 	messages.get(playerID).add(data);
-		// }
 		{
+			// Send level size
 			messages.get(playerID).add(new String[] {
 				"level_size",
 				String.valueOf(level.tiles.length),
@@ -52,6 +34,7 @@ public class Game {
 			});
 		}
 		{
+			// Send tiles (to be removed)
 			for (int y = 0; y < level.tiles[0].length; y++) {
 				String[] data = new String[level.tiles[0].length + 1];
 				data[0] = "show_tiles";
@@ -61,14 +44,31 @@ public class Game {
 				messages.get(playerID).add(data);
 			}
 		}
+		// Create player entity
+		Player playerEntity = this.createPlayerEntity(playerID);
+		{
+			// Send entities
+			for (Entity e : this.level.entities) {
+				if (e instanceof TileEntity tileEntity) {
+					String[] data = new String[] {
+						"create_entity",
+						tileEntity.serialize().toString()
+					};
+					messages.get(playerID).add(data);
+				}
+			}
+		}
+		this.addFreshEntity(playerEntity);
+		{
+			String[] data = new String[] {
+				"set_me",
+				String.valueOf(playerEntity.id)
+			};
+			messages.get(playerID).add(data);
+		}
 		// Save player ID
 		return playerID;
 	}
-	// public Optional<String> getPlayerMessage(String playerID) {
-	// 	ArrayList<String> m = messages.get(playerID);
-	// 	if (m.isEmpty()) return Optional.empty();
-	// 	else return Optional.of(m.get(0));
-	// }
 	public Map<String, byte[]> getAllData() {
 		HashMap<String, byte[]> data = new HashMap<String, byte[]>();
 		for (String folder_name : new String[] {
@@ -81,5 +81,28 @@ public class Game {
 			}
 		}
 		return data;
+	}
+	public Player createPlayerEntity(String playerID) {
+		int[] spawnPoint = this.level.getSpawnPoint();
+		return new Player(playerID, this.level.getNewEntityTime(), spawnPoint[0], spawnPoint[1]);
+	}
+	public void addFreshEntity(Entity e) {
+		// *Not related to Minecraft
+		this.level.entities.add(e);
+		if (e instanceof TileEntity tileEntity) {
+			for (String playerID : this.messages.keySet()) {
+				String[] data = new String[] {
+					"create_entity",
+					tileEntity.serialize().toString()
+				};
+				messages.get(playerID).add(data);
+			}
+		}
+	}
+	public void doEntityTurns() {
+		for (int i = 0; i < 16; i++) {
+			boolean canContinue = this.level.doEntityTurn();
+			if (! canContinue) break;
+		}
 	}
 }

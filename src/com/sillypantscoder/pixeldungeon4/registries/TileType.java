@@ -23,15 +23,17 @@ public class TileType {
 			JSON.JObject<?> object = JSON.JObject.parse(Utils.readFile("data/definitions/tile/" + name));
 			// Unpack JSON object
 			// - Collision type
-			String collisionTypeString = object.get("type", JSON.JString.class).s;
+			String collisionTypeString = object.get("collisionType", JSON.JString.class).s;
 			CollisionType collisionType = CollisionType.NONE;
-			if (collisionTypeString == "normal") collisionType = CollisionType.NORMAL;
-			if (collisionTypeString == "wall") collisionType = CollisionType.WALL;
+			if (collisionTypeString.equals("none")) collisionType = CollisionType.NONE;
+			else if (collisionTypeString.equals("normal")) collisionType = CollisionType.NORMAL;
+			else if (collisionTypeString.equals("wall")) collisionType = CollisionType.WALL;
+			else System.err.println("Invalid collision type for tile: " + name);
 			// - Can see through
 			boolean canSeeThrough = object.get("canSeeThrough", JSON.JBoolean.class).b;
 			// Assemble TileType object
 			TileType type = new TileType(collisionType, canSeeThrough);
-			types.put(name, type);
+			types.put(name.split("\\.")[0], type);
 		}
 		return types;
 	}
