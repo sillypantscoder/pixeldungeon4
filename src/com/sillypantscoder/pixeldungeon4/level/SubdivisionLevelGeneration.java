@@ -10,7 +10,7 @@ import com.sillypantscoder.utils.Rect;
  */
 public class SubdivisionLevelGeneration {
 	public static void main(String[] args) {
-		Tile[][] level = generateLevel().tiles;
+		Tile[][] level = generateLevel(60).tiles;
 		// Print level as ASCII art
 		for (int y = 0; y < level.length; y++) {
 			for (int x = 0; x < level[y].length; x++) {
@@ -68,31 +68,30 @@ public class SubdivisionLevelGeneration {
 					// Top
 					doorX = Random.randint((rect.left() * 2) + 1, (rect.right() * 2) - 1);
 					doorY = rect.top() * 2;
-					level.tiles[doorX][doorY].state = "door";
+					level.tiles[doorX][doorY].state = "door_closed";
 					break;
 				case 1:
 					// Bottom
 					doorX = Random.randint((rect.left() * 2) + 1, (rect.right() * 2) - 1);
 					doorY = rect.bottom() * 2;
-					level.tiles[doorX][doorY].state = "door";
+					level.tiles[doorX][doorY].state = "door_closed";
 					break;
 				case 2:
 					// Left
 					doorX = rect.left() * 2;
 					doorY = Random.randint((rect.top() * 2) + 1, (rect.bottom() * 2) - 1);
-					level.tiles[doorX][doorY].state = "door";
+					level.tiles[doorX][doorY].state = "door_closed";
 					break;
 				case 3:
 					// Right
 					doorX = rect.right() * 2;
 					doorY = Random.randint((rect.top() * 2) + 1, (rect.bottom() * 2) - 1);
-					level.tiles[doorX][doorY].state = "door";
+					level.tiles[doorX][doorY].state = "door_closed";
 					break;
 			}
 		}
 	}
-	public static Level generateLevel() {
-		int worldSize = 60;
+	public static Level generateLevel(int worldSize) {
 		worldSize /= 2;
 		ArrayList<Rect> resultRects = getDividedRects(worldSize, 3, 7);
 		// Create floor

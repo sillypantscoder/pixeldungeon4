@@ -14,7 +14,7 @@ public class Game {
 	public Level level;
 	public HashMap<String, ArrayList<String[]>> messages;
 	public Game() {
-		this.level = SubdivisionLevelGeneration.generateLevel();
+		this.level = SubdivisionLevelGeneration.generateLevel(30);
 		this.messages = new HashMap<String, ArrayList<String[]>>();
 	}
 	public String loginPlayer() {
@@ -22,34 +22,44 @@ public class Game {
 		String playerID = "P" + Random.randint(1, 10000000);
 		// Messages
 		messages.put(playerID, new ArrayList<String[]>());
-		{
-			String[] data = new String[level.tiles[0].length + 1];
-			data[0] = "log";
-			for (int y = 0; y < level.tiles[0].length; y++) {
-				String row = "";
-				for (int x = 0; x < level.tiles.length; x++) {
-					switch (level.tiles[x][y].state) {
-						case "normal":
-							row += "__";
-							break;
-						case "wall":
-							row += "##";
-							break;
-						case "door":
-							row += "][";
-							break;
-					}
-				}
-				data[y + 1] = row;
-			}
-			messages.get(playerID).add(data);
-		}
+		// {
+		// 	String[] data = new String[level.tiles[0].length + 1];
+		// 	data[0] = "log";
+		// 	for (int y = 0; y < level.tiles[0].length; y++) {
+		// 		String row = "";
+		// 		for (int x = 0; x < level.tiles.length; x++) {
+		// 			switch (level.tiles[x][y].state) {
+		// 				case "normal":
+		// 					row += "__";
+		// 					break;
+		// 				case "wall":
+		// 					row += "##";
+		// 					break;
+		// 				case "door":
+		// 					row += "][";
+		// 					break;
+		// 			}
+		// 		}
+		// 		data[y + 1] = row;
+		// 	}
+		// 	messages.get(playerID).add(data);
+		// }
 		{
 			messages.get(playerID).add(new String[] {
 				"level_size",
 				String.valueOf(level.tiles.length),
 				String.valueOf(level.tiles[0].length)
 			});
+		}
+		{
+			for (int y = 0; y < level.tiles[0].length; y++) {
+				String[] data = new String[level.tiles[0].length + 1];
+				data[0] = "show_tiles";
+				for (int x = 0; x < level.tiles.length; x++) {
+					data[x + 1] = x + " " + y + " " + level.tiles[x][y].state;
+				}
+				messages.get(playerID).add(data);
+			}
 		}
 		// Save player ID
 		return playerID;

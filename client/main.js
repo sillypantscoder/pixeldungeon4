@@ -105,13 +105,24 @@ class AssetManager {
 		}
 		return Promise.all(promises)
 	}
+	/**
+	 * @param {string} type
+	 * @param {string} id
+	 */
+	getTexture(type, id) {
+		var asset = this.assets.textures[type][id]
+		if (asset == undefined) throw new Error(`Missing asset: Texture for ${type}/${id}`)
+		return asset
+	}
 }
 
+/** @typedef {{ state: string, visibility: 0 | 1 | 2 }} TileState */
 class Game {
 	/** @param {Main} main */
 	constructor(main) {
 		this.main = main
-		this.level = [["none"]]
+		/** @type {TileState[][]} */
+		this.level = [[{ state: "none", visibility: 0 }]]
 		this.assets = new AssetManager()
 	}
 	/**
@@ -121,24 +132,67 @@ class Game {
 	setLevelSize(xSize, ySize) {
 		this.level = []
 		for (var y = 0; y < ySize; y++) {
-			/** @type {string[]} */
+			/** @type {TileState[]} */
 			var column = []
 			this.level.push(column)
 			for (var x = 0; x < xSize; x++) {
-				var cell = "none"
+				/** @type {TileState} */
+				var cell = { state: "none", visibility: 0 }
 				column.push(cell)
 			}
 		}
+	}
+	/**
+	 * @param {string[]} tilesData
+	 */
+	showTiles(tilesData) {
+		for (var td of tilesData) {
+			var x = Number(td.split(" ")[0])
+			var y = Number(td.split(" ")[1])
+			var state = td.split(" ")[2]
+			this.level[x][y] = { state, visibility: 2 }
+		}
+	}
+}
+class Rendering {
+	static TILE_SIZE = 16;
+	static LEVEL_CANVAS = [...document.getElementsByTagName("canvas")].filter((v) => v.id == "level")[0]
+	static setupCanvas() {
+		this.LEVEL_CANVAS.width = window.innerWidth
+		this.LEVEL_CANVAS.height = window.innerHeight
+	}
+	/**
+	 * @param {TileState[][]} level
+	 * @param {AssetManager} assetManager
+	 */
+	static renderTiles(level, assetManager) {
+		var s = new Surface(level[0].length * this.TILE_SIZE, level.length * this.TILE_SIZE, "black");
+		for (var x = 0; x < level[0].length; x++) {
+			for (var y = 0; y < level.length; y++) {
+				var tile = level[x][y]
+				var tileImage = assetManager.getTexture("tile", tile.state)
+				s.blit(tileImage, x * this.TILE_SIZE, y * this.TILE_SIZE)
+			}
+		}
+		return s
+	}
+	/** @param {Game} game */
+	static renderWholeScreen(game) {
+		var s = this.renderTiles(game.level, game.assets);
+		// Draw to canvas!
+		s.drawToCanvas(this.LEVEL_CANVAS)
 	}
 }
 
 class Main {
 	static async main() {
+		Rendering.setupCanvas()
 		var clientID = await Utils.post("/login", "");
 		var main = new Main(clientID);
-		main.getAssetDataFromServer().then((v) => {
+		main.getAssetDataFromServer().then(() => {
 			main.getMessagesFromServer()
 			main.messageHandleLoop()
+			main.renderLoop()
 		})
 		// @ts-ignore
 		window.main = main
@@ -154,7 +208,7 @@ class Main {
 	async getAssetDataFromServer() {
 		var blob = await Utils.getBinary("/data.zip");
 		var assets = await Utils.unzipZipFile(blob);
-		this.game.assets.importAssets(assets)
+		await this.game.assets.importAssets(assets)
 	}
 	async getMessagesFromServer() {
 		var messages = JSON.parse(await Utils.get("/get_messages/" + this.clientID));
@@ -186,9 +240,20 @@ class Main {
 			var xSize = Number(message[1])
 			var ySize = Number(message[2])
 			this.game.setLevelSize(xSize, ySize)
+		} else if (message[0] == "show_tiles") {
+			this.game.showTiles(message.slice(1))
 		} else {
 			console.log("Unknown message!", message)
 		}
+	}
+	async renderLoop() {
+		while (true) {
+			await new Promise((resolve) => requestAnimationFrame(resolve));
+			this.renderFrame()
+		}
+	}
+	renderFrame() {
+		Rendering.renderWholeScreen(this.game)
 	}
 }
 Main.main();
