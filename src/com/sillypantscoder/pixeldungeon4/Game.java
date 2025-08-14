@@ -72,7 +72,9 @@ public class Game {
 	public Map<String, byte[]> getAllData() {
 		HashMap<String, byte[]> data = new HashMap<String, byte[]>();
 		for (String folder_name : new String[] {
+			"data/definitions/entity_spritesheets",
 			"data/definitions/tile",
+			"data/textures/entity",
 			"data/textures/tile"
 		}) {
 			for (String filename : new File(folder_name).list()) {

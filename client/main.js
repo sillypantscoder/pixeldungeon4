@@ -66,12 +66,18 @@ class Utils {
 }
 class AssetManager {
 	constructor() {
-		/** @type {{ definitions: { tile: Object<string, { collisionType: "none" | "normal" | "wall", canSeeThrough: boolean }> }, textures: Object<string, Object<string, Surface>> }} */
+		/**
+		 * @typedef {{ collisionType: "none" | "normal" | "wall", canSeeThrough: boolean }} TileDefinition
+		 * @typedef {{ tileSize: number, initialAnimation: string, animations: Object<string, { frames: { x: number, y: number }[], next: string }> }} EntitySpritesheetDefinition
+		 * @type {{ definitions: { tile: Object<string, TileDefinition>, entity_spritesheets: Object<string, EntitySpritesheetDefinition> }, textures: Object<string, Object<string, Surface>> }}
+		 */
 		this.assets = {
 			"definitions": {
+				"entity_spritesheets": {},
 				"tile": {}
 			},
 			"textures": {
+				"entity": {},
 				"tile": {}
 			}
 		}
@@ -93,7 +99,10 @@ class AssetManager {
 					registry[filename[1]][filename[2]] = surface
 				}))
 			} else if (filename[0] == "definitions") {
-				if (filename[1] == "tile") {
+				if (filename[1] == "entity_spritesheets") {
+					const decoder = new TextDecoder('utf-8')
+					this.assets.definitions.entity_spritesheets[filename[2]] = JSON.parse(decoder.decode(fileData))
+				} else if (filename[1] == "tile") {
 					const decoder = new TextDecoder('utf-8')
 					this.assets.definitions.tile[filename[2]] = JSON.parse(decoder.decode(fileData))
 				} else {
@@ -125,7 +134,77 @@ class AssetManager {
 		throw new Error("Entity type not found: " + JSON.stringify(entity_data))
 	}
 }
+class SpritesheetDisplay {
+	/**
+	 * @param {Surface} surface
+	 * @param {number} tileSize
+	 * @param {Object<string, { frames: { x: number, y: number }[], next: string }>} animations
+	 * @param {string} initialAnimation
+	 */
+	constructor(surface, tileSize, animations, initialAnimation) {
+		/** @type {Object<string, Surface>} */
+		this.surfaces = {}
+		for (var x = 0; x < surface.get_width(); x += tileSize) {
+			for (var y = 0; y < surface.get_height(); y += tileSize) {
+				this.surfaces[`${x/tileSize},${y/tileSize}`] = surface.crop(x, y, tileSize, tileSize)
+			}
+		}
+		this.animations = animations
+		this.currentAnimation = initialAnimation
+		this.currentAnimationPos = 0
+		this.frameTime = 0
+	}
+	nextFrame() {
+		this.frameTime += 1
+		if (this.frameTime == 4) {
+			this.frameTime = 0
+			this.nextAnimationFrame()
+		}
+	}
+	nextAnimationFrame() {
+		this.currentAnimationPos += 1
+		if (this.currentAnimationPos >= this.animations[this.currentAnimation].frames.length) {
+			// Next animation!
+			var next = this.animations[this.currentAnimation].next
+			if (! Object.keys(this.animations).includes(next)) {
+				// There is no next animation... repeat this frame forever...?
+				this.currentAnimationPos -= 1;
+				return;
+			}
+			// Set current animation
+			this.currentAnimation = next
+			this.currentAnimationPos = 0
+		}
+	}
+	getFrame() {
+		var image_pos = this.animations[this.currentAnimation].frames[this.currentAnimationPos]
+		return this.surfaces[`${image_pos.x},${image_pos.y}`]
+	}
+}
 
+class Actor {
+	/**
+	 * @param {SpritesheetDisplay} sprites
+	 * @param {number} x
+	 * @param {number} y
+	 */
+	constructor(sprites, x, y) {
+		this.sprites = sprites
+		this.x = x
+		this.y = y
+	}
+	/**
+	 * @param {string} entityID
+	 * @param {AssetManager} assets
+	 * @param {number} x
+	 * @param {number} y
+	 */
+	static createForEntityID(entityID, assets, x, y) {
+		var spritesImage = assets.getTexture("entity", entityID)
+		var spritesData = assets.assets.definitions.entity_spritesheets[entityID]
+		return new Actor(new SpritesheetDisplay(spritesImage, spritesData.tileSize, spritesData.animations, spritesData.initialAnimation), x, y)
+	}
+}
 class Entity {
 	/**
 	 * @param {number} id
@@ -136,14 +215,25 @@ class Entity {
 		this.id = id
 		this.x = x
 		this.y = y
-		this.displayX = x
-		this.displayY = y
+		/** @type {Actor | null} */
+		this.actor = null
 	}
 	/**
 	 * @abstract
 	 * @returns {string}
 	 */
 	getEntityID() { throw new Error("`Entity` is an abstract class, `getID` must be overridden"); }
+	/**
+	 * @param {AssetManager} assets
+	 */
+	getNextFrame(assets) {
+		if (this.actor == null) {
+			this.actor = Actor.createForEntityID(this.getEntityID(), assets, this.x, this.y)
+		} else {
+			this.actor.sprites.nextFrame()
+		}
+		return this.actor.sprites.getFrame()
+	}
 }
 class LivingEntity extends Entity {
 	/**
@@ -235,9 +325,24 @@ class Rendering {
 		}
 		return s
 	}
+	/**
+	 * @param {TileState[][]} level
+	 * @param {Entity[]} entities
+	 * @param {AssetManager} assetManager
+	 */
+	static renderEntities(level, entities, assetManager) {
+		var s = new Surface(level.length * this.TILE_SIZE, level[0].length * this.TILE_SIZE, "transparent");
+		for (var entity of entities) {
+			var entityImage = entity.getNextFrame(assetManager)
+			var actorPos = entity.actor ?? { x: -1, y: -1 }
+			s.blit(entityImage, actorPos.x * this.TILE_SIZE, actorPos.y * this.TILE_SIZE)
+		}
+		return s
+	}
 	/** @param {Game} game */
 	static renderWholeScreen(game) {
 		var s = this.renderTiles(game.level, game.assets);
+		s.blit(this.renderEntities(game.level, game.entities, game.assets), 0, 0);
 		// Draw to canvas!
 		s.drawToCanvas(this.LEVEL_CANVAS)
 	}

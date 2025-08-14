@@ -10,6 +10,8 @@ class Surface {
 		this.context = this.canvas.getContext('2d') ?? (() => { throw new Error() })()
 		this.fill(color)
 	}
+	get_width() { return this.canvas.width }
+	get_height() { return this.canvas.height }
 	/**
 	 * @param {string} color
 	 */
@@ -33,6 +35,17 @@ class Surface {
 		if (ctx == null) throw new Error("wrong type of canvas")
 		ctx.clearRect(0, 0, canvas.width, canvas.height)
 		ctx.drawImage(this.canvas, 0, 0)
+	}
+	/**
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} width
+	 * @param {number} height
+	 */
+	crop(x, y, width, height) {
+		var cropped = new Surface(width, height, "transparent")
+		cropped.context.drawImage(this.canvas, x, y, width, height, 0, 0, width, height)
+		return cropped
 	}
 	/**
 	 * @param {ArrayBuffer} arrayBuffer
