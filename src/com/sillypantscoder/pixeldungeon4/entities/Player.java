@@ -6,6 +6,7 @@ public class Player extends LivingEntity {
 	public String playerID;
 	public Player(String playerID, int time, int x, int y) {
 		super(time, x, y, 10);
+		this.playerID = playerID;
 	}
 	public boolean takeTurn() {
 		return false;

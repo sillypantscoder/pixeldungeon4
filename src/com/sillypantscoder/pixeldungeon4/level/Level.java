@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import com.sillypantscoder.pixeldungeon4.entities.Entity;
 import com.sillypantscoder.pixeldungeon4.registries.TileType;
+import com.sillypantscoder.utils.LinePoints;
 import com.sillypantscoder.utils.Random;
 
 public class Level {
@@ -54,5 +55,13 @@ public class Level {
 		if (minimumTimeEntity != null) {
 			return minimumTimeEntity.takeTurn();
 		} else return false;
+	}
+	public boolean isLocVisible(int x1, int y1, int x2, int y2) {
+		int[][] points = LinePoints.get_line(new int[] { x1, y1 }, new int[] { x2, y2 });
+		for (int i = 0; i < points.length - 1; i++) {
+			String stateString = this.tiles[points[i][0]][points[i][1]].state;
+			if (! TileType.allTileTypes.get(stateString).canSeeThrough) return false;
+		}
+		return true;
 	}
 }

@@ -33,30 +33,11 @@ public class Game {
 				String.valueOf(level.tiles[0].length)
 			});
 		}
-		{
-			// Send tiles (to be removed)
-			for (int y = 0; y < level.tiles[0].length; y++) {
-				String[] data = new String[level.tiles[0].length + 1];
-				data[0] = "show_tiles";
-				for (int x = 0; x < level.tiles.length; x++) {
-					data[x + 1] = x + " " + y + " " + level.tiles[x][y].state;
-				}
-				messages.get(playerID).add(data);
-			}
-		}
 		// Create player entity
 		Player playerEntity = this.createPlayerEntity(playerID);
 		{
-			// Send entities
-			for (Entity e : this.level.entities) {
-				if (e instanceof TileEntity tileEntity) {
-					String[] data = new String[] {
-						"create_entity",
-						tileEntity.serialize().toString()
-					};
-					messages.get(playerID).add(data);
-				}
-			}
+			// Send vision (tiles + entities)
+			this.sendPlayerVision(playerEntity);
 		}
 		this.addFreshEntity(playerEntity);
 		{
@@ -105,6 +86,29 @@ public class Game {
 		for (int i = 0; i < 16; i++) {
 			boolean canContinue = this.level.doEntityTurn();
 			if (! canContinue) break;
+		}
+	}
+	public void sendPlayerVision(Player p) {
+		// Tiles
+		ArrayList<String> vision = new ArrayList<String>();
+		vision.add("show_tiles");
+		for (int y = 0; y < level.tiles[0].length; y++) {
+			for (int x = 0; x < level.tiles.length; x++) {
+				if (! this.level.isLocVisible(p.x, p.y, x, y)) continue;
+				vision.add(x + " " + y + " " + level.tiles[x][y].state);
+			}
+		}
+		messages.get(p.playerID).add(vision.toArray(new String[0]));
+		// Entities
+		for (Entity e : this.level.entities) {
+			if (e instanceof TileEntity tileEntity) {
+				if (! this.level.isLocVisible(p.x, p.y, tileEntity.x, tileEntity.y)) continue;
+				String[] data = new String[] {
+					"create_entity",
+					tileEntity.serialize().toString()
+				};
+				messages.get(p.playerID).add(data);
+			}
 		}
 	}
 }
