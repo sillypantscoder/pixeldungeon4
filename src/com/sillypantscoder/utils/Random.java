@@ -25,7 +25,7 @@ public class Random {
 		}
 		return items;
 	}
-	public static long randomLong() {
-		return r.nextLong();
+	public static int randomInt() {
+		return r.nextInt();
 	}
 }

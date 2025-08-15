@@ -1,5 +1,6 @@
 package com.sillypantscoder.utils;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -69,7 +70,9 @@ public class JSON {
 			this.n = n;
 		}
 		public String toString() {
-			return "" + this.n;
+			DecimalFormat format = new DecimalFormat("#");
+			// format.setMaximumFractionDigits(0);
+			return "" + format.format(this.n);
 		}
 		public static JNumber read(Buffer b) {
 			String data = "" + b.read();

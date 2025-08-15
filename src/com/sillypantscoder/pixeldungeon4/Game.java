@@ -22,7 +22,7 @@ public class Game {
 	}
 	public String loginPlayer() {
 		// Get player ID
-		String playerID = "P" + Random.randomLong();
+		String playerID = "P" + Random.randomInt();
 		// Messages
 		messages.put(playerID, new ArrayList<String[]>());
 		{
@@ -65,6 +65,14 @@ public class Game {
 		}
 		return data;
 	}
+	public Player getPlayerByID(String playerID) {
+		for (Entity entity : this.level.entities) {
+			if (entity instanceof Player player && player.playerID.equals(playerID)) {
+				return player;
+			}
+		}
+		throw new RuntimeException("Player with ID '" + playerID + "' not found");
+	}
 	public Player createPlayerEntity(String playerID) {
 		int[] spawnPoint = this.level.getSpawnPoint();
 		return new Player(playerID, this.level.getNewEntityTime(), spawnPoint[0], spawnPoint[1]);
@@ -84,7 +92,7 @@ public class Game {
 	}
 	public void doEntityTurns() {
 		for (int i = 0; i < 16; i++) {
-			boolean canContinue = this.level.doEntityTurn();
+			boolean canContinue = this.level.doEntityTurn(this);
 			if (! canContinue) break;
 		}
 	}

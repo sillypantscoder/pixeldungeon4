@@ -125,6 +125,7 @@ class AssetManager {
 	}
 	/**
 	 * @param {{ type: string} & Object<string, any>} entity_data
+	 * @returns {Entity}
 	 */
 	deserializeEntity(entity_data) {
 		if (entity_data.type == "player") {
@@ -183,6 +184,7 @@ class SpritesheetDisplay {
 }
 
 class Actor {
+	static ACTOR_MOVE_SPEED = 0.125;
 	/**
 	 * @param {SpritesheetDisplay} sprites
 	 * @param {number} x
@@ -192,6 +194,16 @@ class Actor {
 		this.sprites = sprites
 		this.x = x
 		this.y = y
+	}
+	/**
+	 * @param {number} targetX
+	 * @param {number} targetY
+	 */
+	moveFrame(targetX, targetY) {
+		if (this.x < targetX) this.x += Actor.ACTOR_MOVE_SPEED;
+		if (this.x > targetX) this.x -= Actor.ACTOR_MOVE_SPEED;
+		if (this.y < targetY) this.y += Actor.ACTOR_MOVE_SPEED;
+		if (this.y > targetY) this.y -= Actor.ACTOR_MOVE_SPEED;
 	}
 	/**
 	 * @param {string} entityID
@@ -232,7 +244,17 @@ class Entity {
 		} else {
 			this.actor.sprites.nextFrame()
 		}
+		this.actor.moveFrame(this.x, this.y)
 		return this.actor.sprites.getFrame()
+	}
+	/**
+	 * @param {Game} game
+	 */
+	verifyVisible(game) {
+		var tile = game.level[this.x][this.y]
+		if (tile.visibility == 0) {
+			game.removeEntity(this)
+		}
 	}
 }
 class LivingEntity extends Entity {
@@ -275,6 +297,15 @@ class Game {
 		this.assets = new AssetManager()
 	}
 	/**
+	 * @param {number} id
+	 */
+	getEntityByID(id) {
+		for (var entity of this.entities) {
+			if (entity.id == id) return entity;
+		}
+		return null
+	}
+	/**
 	 * @param {number} xSize
 	 * @param {number} ySize
 	 */
@@ -301,6 +332,12 @@ class Game {
 			var state = td.split(" ")[2]
 			this.level[x][y] = { state, visibility: 2 }
 		}
+	}
+	/**
+	 * @param {Entity} entity
+	 */
+	removeEntity(entity) {
+		this.entities.splice(this.entities.indexOf(entity), 1)
 	}
 }
 class Rendering {
@@ -390,7 +427,7 @@ class Main {
 	async messageHandleLoop() {
 		while (true) {
 			while (this.messageQueue.length == 0) await new Promise((resolve) => setTimeout(resolve, 100));
-			this.handleMessage(this.messageQueue[0])
+			await this.handleMessage(this.messageQueue[0])
 			this.messageQueue.shift()
 		}
 	}
@@ -407,8 +444,20 @@ class Main {
 		} else if (message[0] == "show_tiles") {
 			this.game.showTiles(message.slice(1))
 		} else if (message[0] == "create_entity") {
-			var entity = this.game.assets.deserializeEntity(JSON.parse(message[1]))
+			// check if entity already exists
+			var entity = this.game.getEntityByID(JSON.parse(message[1]).id)
+			if (entity != null) return;
+			entity = this.game.assets.deserializeEntity(JSON.parse(message[1]))
 			this.game.entities.push(entity)
+		} else if (message[0] == "move_entity") {
+			var entity = this.game.getEntityByID(Number(message[1]))
+			if (entity == null) throw new Error("Can't set position of nonexistent entity")
+			// Wait for animation to finish
+			while (entity.x != entity.actor?.x || entity.y != entity.actor?.y) await new Promise((resolve) => requestAnimationFrame(resolve))
+			// Set position
+			entity.x = Number(message[2])
+			entity.y = Number(message[3])
+			entity.verifyVisible(this.game)
 		} else {
 			console.log("Unknown message!", message)
 		}

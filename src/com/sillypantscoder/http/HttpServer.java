@@ -42,6 +42,13 @@ public class HttpServer {
 				}
 			} catch (Throwable e) {
 				e.printStackTrace();
+				HttpResponse response = new HttpResponse().setStatus(500).addHeader("Content-Type", "text/plain").setBody("The server has crashed! Please see the log messages for details.");
+				try {
+					response.send(httpExchange);
+				} catch (IOException e2) {
+					System.err.println("Error occurred while sending 500 message to client:");
+					e2.printStackTrace();
+				}
 			}
 		}
 		private void handleGetRequest(HttpExchange httpExchange) throws IOException {

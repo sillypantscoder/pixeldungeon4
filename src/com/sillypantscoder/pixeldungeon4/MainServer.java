@@ -21,6 +21,7 @@ public class MainServer extends HttpServer.RequestHandler {
 		if (path.startsWith("/get_messages/")) {
 			String playerID = path.split("/")[2];
 			if (! game.messages.containsKey(playerID)) return new HttpResponse().setStatus(400).setBody("That player is not logged in");
+			game.doEntityTurns();
 			ArrayList<String[]> messages = game.messages.get(playerID);
 			game.messages.put(playerID, new ArrayList<String[]>());
 			return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/plain").setBody(JSON.make2DStringList(messages).toString());

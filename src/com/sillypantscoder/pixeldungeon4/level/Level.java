@@ -1,7 +1,10 @@
 package com.sillypantscoder.pixeldungeon4.level;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
+import com.sillypantscoder.pixeldungeon4.Game;
+import com.sillypantscoder.pixeldungeon4.actions.Action;
 import com.sillypantscoder.pixeldungeon4.entities.Entity;
 import com.sillypantscoder.pixeldungeon4.registries.TileType;
 import com.sillypantscoder.utils.LinePoints;
@@ -43,7 +46,11 @@ public class Level {
 		}
 		return minEntityTime + 1;
 	}
-	public boolean doEntityTurn() {
+	/**
+	 * The next entity takes a turn.
+	 * @return True if we can continue taking turns, false if no more turns are possible for some reason.
+	 */
+	public boolean doEntityTurn(Game game) {
 		Entity minimumTimeEntity = null;
 		int minimumTime = 0;
 		for (Entity entity : entities) {
@@ -53,7 +60,9 @@ public class Level {
 			}
 		}
 		if (minimumTimeEntity != null) {
-			return minimumTimeEntity.takeTurn();
+			Optional<Action<?>> action = minimumTimeEntity.getAction(game.level);
+			action.ifPresent((a) -> a.execute(game));
+			return action.isPresent();
 		} else return false;
 	}
 	public boolean isLocVisible(int x1, int y1, int x2, int y2) {
