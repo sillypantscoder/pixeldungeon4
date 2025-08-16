@@ -1,10 +1,13 @@
 package com.sillypantscoder.pixeldungeon4;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.sillypantscoder.http.HttpResponse;
 import com.sillypantscoder.http.HttpServer;
-import com.sillypantscoder.utils.JSON;
+import com.sillypantscoder.utils.JSONObject;
 import com.sillypantscoder.utils.Utils;
 
 public class MainServer extends HttpServer.RequestHandler {
@@ -22,9 +25,9 @@ public class MainServer extends HttpServer.RequestHandler {
 			String playerID = path.split("/")[2];
 			if (! game.messages.containsKey(playerID)) return new HttpResponse().setStatus(400).setBody("That player is not logged in");
 			game.doEntityTurns();
-			ArrayList<String[]> messages = game.messages.get(playerID);
+			List<? extends List<String>> messages = game.messages.get(playerID).stream().map((v) -> Arrays.asList(v)).collect(Collectors.toList());
 			game.messages.put(playerID, new ArrayList<String[]>());
-			return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/plain").setBody(JSON.make2DStringList(messages).toString());
+			return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/plain").setBody(JSONObject.encode2DList(messages));
 		}
 		if (path.equals("/data.zip")) {
 			byte[] zipData = Utils.zipFiles(game.getAllData());

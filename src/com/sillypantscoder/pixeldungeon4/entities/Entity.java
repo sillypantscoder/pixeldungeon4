@@ -10,5 +10,6 @@ public abstract class Entity {
 	public Entity(int time) {
 		this.time = time;
 	}
+	public abstract String getTypeID();
 	public abstract Optional<Action<?>> getAction(Level level);
 }
