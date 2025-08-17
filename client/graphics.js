@@ -8,7 +8,7 @@ class Surface {
 		this.canvas = new OffscreenCanvas(width, height)
 		/** @type {OffscreenCanvasRenderingContext2D} */
 		this.context = this.canvas.getContext('2d') ?? (() => { throw new Error() })()
-		this.fill(color)
+		if (color != "transparent") this.fill(color)
 	}
 	get_width() { return this.canvas.width }
 	get_height() { return this.canvas.height }
@@ -26,6 +26,16 @@ class Surface {
 	 */
 	blit(other, x, y) {
 		this.context.drawImage(other instanceof Surface ? other.canvas : other, x, y)
+	}
+	copy() {
+		var o = new Surface(this.canvas.width, this.canvas.height, "transparent")
+		o.blit(this, 0, 0)
+		return o
+	}
+	darken() {
+		this.context.fillStyle = "rgba(0, 0, 0, 0.4)";
+		this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+		return this;
 	}
 	/**
 	 * @param {HTMLCanvasElement} canvas

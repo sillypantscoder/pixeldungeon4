@@ -42,11 +42,12 @@ public abstract class Action<T extends Entity> {
 						String.valueOf(this.entity.x),
 						String.valueOf(this.entity.y)
 					});
+					// TODO: Create entities for clients that don't have them yet
 					// TODO: Set animation
 				}
 			}
 			if (this.entity instanceof Player player) {
-				game.sendPlayerVision(player);
+				player.sendVision(game.level);
 			}
 			// Update time
 			this.entity.time += this.time;

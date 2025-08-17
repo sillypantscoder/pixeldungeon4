@@ -61,6 +61,7 @@ public class Level {
 			}
 		}
 		if (minimumTimeEntity != null) {
+			// System.out.println(minimumTimeEntity);
 			Optional<Action<?>> action = minimumTimeEntity.getAction(game.level);
 			action.ifPresent((a) -> a.execute(game));
 			return action.isPresent();

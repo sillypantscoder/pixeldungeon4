@@ -35,10 +35,7 @@ public class Game {
 		}
 		// Create player entity
 		Player playerEntity = this.createPlayerEntity(playerID);
-		{
-			// Send vision (tiles + entities)
-			this.sendPlayerVision(playerEntity);
-		}
+		playerEntity.sendVision(level);
 		this.addFreshEntity(playerEntity);
 		{
 			String[] data = new String[] {
@@ -49,6 +46,12 @@ public class Game {
 		}
 		// Save player ID
 		return playerID;
+	}
+	public void clearMessages(String playerID) {
+		ArrayList<String[]> messageList = new ArrayList<String[]>();
+		this.messages.put(playerID, messageList);
+		Player p = this.getPlayerByID(playerID);
+		p.sendMessage = messageList::add;
 	}
 	public Map<String, byte[]> getAllData() {
 		HashMap<String, byte[]> data = new HashMap<String, byte[]>();
@@ -76,13 +79,17 @@ public class Game {
 	}
 	public Player createPlayerEntity(String playerID) {
 		int[] spawnPoint = this.level.getSpawnPoint();
-		return new Player(playerID, this.level.getNewEntityTime(), spawnPoint[0], spawnPoint[1]);
+		return new Player(playerID, this.level.getNewEntityTime(), spawnPoint[0], spawnPoint[1], messages.get(playerID)::add);
 	}
 	public void addFreshEntity(Entity e) {
 		// *Not related to Minecraft
 		this.level.entities.add(e);
 		if (e instanceof TileEntity tileEntity) {
 			for (String playerID : this.messages.keySet()) {
+				// Check if player can see it
+				Player p = this.getPlayerByID(playerID);
+				if (! this.level.isLocVisible(p.x, p.y, tileEntity.x, tileEntity.y)) continue;
+				// Send message!
 				String[] data = new String[] {
 					"create_entity",
 					tileEntity.serialize().toString()
@@ -95,29 +102,6 @@ public class Game {
 		for (int i = 0; i < 16; i++) {
 			boolean canContinue = this.level.doEntityTurn(this);
 			if (! canContinue) break;
-		}
-	}
-	public void sendPlayerVision(Player p) {
-		// Tiles
-		ArrayList<String> vision = new ArrayList<String>();
-		vision.add("show_tiles");
-		for (int y = 0; y < level.tiles[0].length; y++) {
-			for (int x = 0; x < level.tiles.length; x++) {
-				if (! this.level.isLocVisible(p.x, p.y, x, y)) continue;
-				vision.add(x + " " + y + " " + level.tiles[x][y].state);
-			}
-		}
-		messages.get(p.playerID).add(vision.toArray(new String[0]));
-		// Entities
-		for (Entity e : this.level.entities) {
-			if (e instanceof TileEntity tileEntity) {
-				if (! this.level.isLocVisible(p.x, p.y, tileEntity.x, tileEntity.y)) continue;
-				String[] data = new String[] {
-					"create_entity",
-					tileEntity.serialize().toString()
-				};
-				messages.get(p.playerID).add(data);
-			}
 		}
 	}
 }

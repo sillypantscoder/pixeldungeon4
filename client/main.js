@@ -63,13 +63,99 @@ class Utils {
 		await zipFileReader.close();
 		return extracted_files;
 	}
+	/**
+	 * Get all the points that a line passes through.
+	 * Used for lighting.
+	 * @param {number} x1
+	 * @param {number} y1
+	 * @param {number} x2
+	 * @param {number} y2
+	 * @returns {{ x: number, y: number }[]}
+	 */
+	static get_line(x1, y1, x2, y2) {
+		/*
+			Bresenham's Line Algorithm
+			Produces a list of coordinate points from start and end
+		*/
+		// Setup initial conditions
+		var dx = x2 - x1;
+		var dy = y2 - y1;
+
+		// Determine how steep the line is
+		var is_steep = Math.abs(dy) > Math.abs(dx);
+
+		// Rotate line
+		if (is_steep) {
+			var _x1 = x1;
+			x1 = y1;
+			y1 = _x1;
+			var _x2 = x2;
+			x2 = y2;
+			y2 = _x2;
+		}
+
+		// Swap start and end points if necessary and store swap state
+		var swapped = false;
+		if (x1 > x2) {
+			var _x1 = x1;
+			x1 = x2;
+			x2 = _x1;
+			var _y1 = y1;
+			y1 = y2;
+			y2 = _y1;
+			swapped = true;
+		}
+
+		// Recalculate differentials
+		dx = x2 - x1;
+		dy = y2 - y1;
+
+		// Calculate error
+		var error = dx / 2.0;
+		var ystep = -1;
+		if (y1 < y2) ystep = 1;
+
+		// Iterate over bounding box generating points between start and end
+		var y = y1;
+		/** @type {{ x: number, y: number }[]} */
+		var points = [];
+		for (var x = x1; x < x2 + 1; x++) {
+			var coord = { x, y };
+			if (is_steep) coord = { y, x };
+			points.push(coord);
+			error -= Math.abs(dy);
+			if (error < 0) {
+				y += ystep;
+				error += dx;
+			}
+		}
+
+		// Reverse the list if the coordinates were swapped
+		/** @type {{ x: number, y: number }[]} */
+		var ret = [];
+		for (var i = 0; i < points.length; i++) {
+			ret.push({ x: 0, y: 0 });
+		}
+		if (swapped) {
+			for (var i = 0; i < points.length; i++) {
+				ret[points.length - (i + 1)].x = points[i].x;
+				ret[points.length - (i + 1)].y = points[i].y;
+			}
+		} else {
+			for (var i = 0; i < points.length; i++) {
+				ret[i].x = points[i].x;
+				ret[i].y = points[i].y;
+			}
+		}
+		return ret;
+	}
 }
 class AssetManager {
 	constructor() {
 		/**
 		 * @typedef {{ collisionType: "none" | "normal" | "wall", canSeeThrough: boolean }} TileDefinition
 		 * @typedef {{ tileSize: number, initialAnimation: string, animations: Object<string, { frames: { x: number, y: number }[], next: string }> }} EntitySpritesheetDefinition
-		 * @type {{ definitions: { tile: Object<string, TileDefinition>, entity_spritesheets: Object<string, EntitySpritesheetDefinition> }, textures: Object<string, Object<string, Surface>> }}
+		 * @type {{ definitions: { tile: Object<string, TileDefinition>, entity_spritesheets: Object<string, EntitySpritesheetDefinition> }, textures: Object<string, Object<string, { normal: Surface, dark: Surface }>> }}
 		 */
 		this.assets = {
 			"definitions": {
@@ -97,7 +183,10 @@ class AssetManager {
 			if (filename[0] == "textures") {
 				let registry = this.assets.textures
 				promises.push(Surface.fromArrayBufferPNG(fileData).then((surface) => {
-					registry[filename[1]][filename[2]] = surface
+					registry[filename[1]][filename[2]] = {
+						normal: surface,
+						dark: surface.copy().darken()
+					}
 				}))
 			} else if (filename[0] == "definitions") {
 				if (filename[1] == "entity_spritesheets") {
@@ -118,11 +207,19 @@ class AssetManager {
 	/**
 	 * @param {string} type
 	 * @param {string} id
+	 * @param {boolean | undefined} [dark]
 	 */
-	getTexture(type, id) {
+	getTexture(type, id, dark) {
 		var asset = this.assets.textures[type][id]
 		if (asset == undefined) throw new Error(`Missing asset: Texture for ${type}/${id}`)
-		return asset
+		if (dark == true) return asset.dark
+		return asset.normal
+	}
+	/**
+	 * @param {string} id
+	 */
+	getTileDefinition(id) {
+		return this.assets.definitions.tile[id]
 	}
 	/**
 	 * @param {{ type: string} & Object<string, any>} entity_data
@@ -286,6 +383,25 @@ class Player extends LivingEntity {
 		this.target = null
 	}
 	getEntityID() { return "player" }
+	/**
+	 * @param {Game} game
+	 */
+	verifyVisible(game) {
+		super.verifyVisible(game);
+		// Update level light
+		for (var x = 0; x < game.level.length; x++) {
+			for (var y = 0; y < game.level[0].length; y++) {
+				var tile = game.level[x][y]
+				if (tile.visibility != 2) continue;
+				if (! game.isLocVisible(this.x, this.y, x, y)) tile.visibility = 1
+			}
+		}
+		// Update all entities
+		for (var entity of game.entities) {
+			if (entity == this) continue;
+			entity.verifyVisible(game);
+		}
+	}
 }
 
 /** @typedef {{ state: string, visibility: 0 | 1 | 2 }} TileState */
@@ -325,6 +441,21 @@ class Game {
 				column.push(cell)
 			}
 		}
+	}
+	/**
+	 * @param {number} x1
+	 * @param {number} y1
+	 * @param {number} x2
+	 * @param {number} y2
+	 */
+	isLocVisible(x1, y1, x2, y2) {
+		if (((x1-x2)*(x1-x2)) + ((y1-y2)*(y1-y2)) > 64) return false;
+		var points = Utils.get_line(x1, y1, x2, y2);
+		for (var i = 1; i < points.length - 1; i++) {
+			var stateString = this.level[points[i].x][points[i].y].state;
+			if (! this.assets.getTileDefinition(stateString).canSeeThrough) return false;
+		}
+		return true;
 	}
 	/**
 	 * @param {string[]} tilesData
@@ -369,7 +500,7 @@ class Rendering {
 		for (var x = 0; x < level.length; x++) {
 			for (var y = 0; y < level[0].length; y++) {
 				var tile = level[x][y]
-				var tileImage = assetManager.getTexture("tile", tile.state)
+				var tileImage = assetManager.getTexture("tile", tile.state, tile.visibility == 1)
 				s.blit(tileImage, x * this.TILE_SIZE, y * this.TILE_SIZE)
 			}
 		}
@@ -454,14 +585,14 @@ class Main {
 		var messages = JSON.parse(await Utils.get("/get_messages/" + this.clientID));
 		// No message
 		if (messages.length == 0) {
-			setTimeout(this.getMessagesFromServer.bind(this), 1000);
+			setTimeout(this.getMessagesFromServer.bind(this), 2000);
 			return;
 		}
 		// Handle message
 		for (var msg of messages) {
 			this.messageQueue.push(msg)
 		}
-		setTimeout(this.getMessagesFromServer.bind(this), 1000);
+		setTimeout(this.getMessagesFromServer.bind(this), 500);
 	}
 	async messageHandleLoop() {
 		while (true) {
@@ -502,10 +633,8 @@ class Main {
 			entity.x = Number(message[2])
 			entity.y = Number(message[3])
 			entity.verifyVisible(this.game)
-			// Remove target for player
-			if (entity == this.game.me && this.game.me.target != null && entity.x == this.game.me.target.x && entity.y == this.game.me.target.y) {
-				this.game.me.target = null
-			}
+		} else if (message[0] == "clear_target") {
+			this.game.me.target = null
 		} else {
 			console.log("Unknown message!", message)
 		}

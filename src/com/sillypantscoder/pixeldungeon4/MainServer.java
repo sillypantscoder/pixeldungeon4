@@ -1,6 +1,5 @@
 package com.sillypantscoder.pixeldungeon4;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,7 +26,7 @@ public class MainServer extends HttpServer.RequestHandler {
 			if (! game.messages.containsKey(playerID)) return new HttpResponse().setStatus(400).setBody("That player is not logged in");
 			game.doEntityTurns();
 			List<? extends List<String>> messages = game.messages.get(playerID).stream().map((v) -> Arrays.asList(v)).collect(Collectors.toList());
-			game.messages.put(playerID, new ArrayList<String[]>());
+			game.clearMessages(playerID);
 			return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/plain").setBody(JSONObject.encode2DList(messages));
 		}
 		if (path.equals("/data.zip")) {
