@@ -56,6 +56,7 @@ public class Game {
 			"data/definitions/entity_spritesheets",
 			"data/definitions/tile",
 			"data/textures/entity",
+			"data/textures/special",
 			"data/textures/tile"
 		}) {
 			for (String filename : new File(folder_name).list()) {

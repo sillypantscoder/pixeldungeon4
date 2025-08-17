@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import com.sillypantscoder.http.HttpResponse;
 import com.sillypantscoder.http.HttpServer;
+import com.sillypantscoder.pixeldungeon4.entities.Player;
 import com.sillypantscoder.utils.JSONObject;
 import com.sillypantscoder.utils.Utils;
 
@@ -37,6 +38,13 @@ public class MainServer extends HttpServer.RequestHandler {
 	}
 	public HttpResponse post(String path, String body) {
 		if (path.equals("/login")) return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/plain").setBody(game.loginPlayer());
+		if (path.equals("/click")) {
+			String[] bodyData = body.split("\n");
+			if (! game.messages.containsKey(bodyData[0])) return new HttpResponse().setStatus(400).setBody("That player is not logged in");
+			Player player = game.getPlayerByID(bodyData[0]);
+			player.setTarget(game.level, Integer.valueOf(bodyData[1]), Integer.valueOf(bodyData[2]));
+			return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/plain");
+		}
 		return new HttpResponse().setStatus(404).setBody("POST path not found");
 	}
 }

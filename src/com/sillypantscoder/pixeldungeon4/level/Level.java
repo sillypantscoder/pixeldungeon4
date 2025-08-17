@@ -8,6 +8,7 @@ import com.sillypantscoder.pixeldungeon4.actions.Action;
 import com.sillypantscoder.pixeldungeon4.entities.Entity;
 import com.sillypantscoder.pixeldungeon4.registries.TileType;
 import com.sillypantscoder.utils.LinePoints;
+import com.sillypantscoder.utils.Pathfinding;
 import com.sillypantscoder.utils.Random;
 
 public class Level {
@@ -66,11 +67,25 @@ public class Level {
 		} else return false;
 	}
 	public boolean isLocVisible(int x1, int y1, int x2, int y2) {
+		if (((x1-x2)*(x1-x2)) + ((y1-y2)*(y1-y2)) > 64) return false;
 		int[][] points = LinePoints.get_line(new int[] { x1, y1 }, new int[] { x2, y2 });
-		for (int i = 0; i < points.length - 1; i++) {
+		for (int i = 1; i < points.length - 1; i++) {
 			String stateString = this.tiles[points[i][0]][points[i][1]].state;
 			if (! TileType.allTileTypes.get(stateString).canSeeThrough) return false;
 		}
 		return true;
+	}
+	public int[][] findPath(int x1, int y1, int x2, int y2) {
+		// Create the board
+		int[][] board = new int[this.tiles.length][this.tiles[0].length];
+		for (int x = 0; x < this.tiles.length; x++) {
+			for (int y = 0; y < this.tiles[0].length; y++) {
+				String state = this.tiles[x][y].state;
+				boolean canWalkOn = TileType.allTileTypes.get(state).collisionType == TileType.CollisionType.NORMAL;
+				board[x][y] = canWalkOn ? 1 : 0;
+			}
+		}
+		// Find path
+		return Pathfinding.findPath(board, new int[] { x1, y1 }, new int[] { x2, y2 }, true);
 	}
 }

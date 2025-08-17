@@ -42,6 +42,7 @@ public abstract class Action<T extends Entity> {
 						String.valueOf(this.entity.x),
 						String.valueOf(this.entity.y)
 					});
+					// TODO: Set animation
 				}
 			}
 			if (this.entity instanceof Player player) {

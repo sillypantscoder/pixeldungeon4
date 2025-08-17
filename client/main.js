@@ -78,6 +78,7 @@ class AssetManager {
 			},
 			"textures": {
 				"entity": {},
+				"special": {},
 				"tile": {}
 			}
 		}
@@ -157,7 +158,7 @@ class SpritesheetDisplay {
 	}
 	nextFrame() {
 		this.frameTime += 1
-		if (this.frameTime == 4) {
+		if (this.frameTime == 8) {
 			this.frameTime = 0
 			this.nextAnimationFrame()
 		}
@@ -281,6 +282,8 @@ class Player extends LivingEntity {
 	 */
 	constructor(id, x, y, health, maxHealth) {
 		super(id, x, y, health, maxHealth)
+		/** @type {null | Entity | { x: number, y: number }} */
+		this.target = null
 	}
 	getEntityID() { return "player" }
 }
@@ -294,6 +297,7 @@ class Game {
 		this.level = [[{ state: "none", visibility: 0 }]]
 		/** @type {Entity[]} */
 		this.entities = []
+		this.me = new Player(0, 0, 0, 0, 0);
 		this.assets = new AssetManager()
 	}
 	/**
@@ -343,9 +347,18 @@ class Game {
 class Rendering {
 	static TILE_SIZE = 16;
 	static LEVEL_CANVAS = [...document.getElementsByTagName("canvas")].filter((v) => v.id == "level")[0]
-	static setupCanvas() {
+	/**
+	 * @param {Game} game
+	 */
+	static setupCanvas(game) {
 		this.LEVEL_CANVAS.width = window.innerWidth
 		this.LEVEL_CANVAS.height = window.innerHeight
+		// Clickable
+		this.LEVEL_CANVAS.addEventListener("click", (e) => {
+			var x = e.clientX
+			var y = e.clientY
+			Rendering.click(game, Math.floor(x / this.TILE_SIZE), Math.floor(y / this.TILE_SIZE));
+		})
 	}
 	/**
 	 * @param {TileState[][]} level
@@ -380,16 +393,42 @@ class Rendering {
 	static renderWholeScreen(game) {
 		var s = this.renderTiles(game.level, game.assets);
 		s.blit(this.renderEntities(game.level, game.entities, game.assets), 0, 0);
+		// Render target
+		var target = game.me.target
+		if (target != null) {
+			var texture = game.assets.getTexture("special", "target_" + (target instanceof Entity ? "entity" : "pos"));
+			s.blit(texture, target.x * this.TILE_SIZE, target.y * this.TILE_SIZE);
+		}
 		// Draw to canvas!
-		s.drawToCanvas(this.LEVEL_CANVAS)
+		s.drawToCanvas(this.LEVEL_CANVAS);
+	}
+	/**
+	 * @param {Game} game
+	 * @param {number} x
+	 * @param {number} y
+	 */
+	static click(game, x, y) {
+		if (x < 0 || y < 0 || x >= game.level.length || y >= game.level[0].length) return;
+		var tile = game.level[x][y];
+		if (tile.visibility == 0) return;
+		// Set player target
+		game.me.target = null
+		for (var entity of game.entities) {
+			if (entity.x == x && entity.y == y) {
+				game.me.target = entity
+			}
+		}
+		if (game.me.target == null) game.me.target = { x, y }
+		// Post
+		Utils.post("/click", game.main.clientID + "\n" + x + "\n" + y);
 	}
 }
 
 class Main {
 	static async main() {
-		Rendering.setupCanvas()
 		var clientID = await Utils.post("/login", "");
 		var main = new Main(clientID);
+		Rendering.setupCanvas(main.game);
 		main.getAssetDataFromServer().then(() => {
 			main.getMessagesFromServer()
 			main.messageHandleLoop()
@@ -415,14 +454,14 @@ class Main {
 		var messages = JSON.parse(await Utils.get("/get_messages/" + this.clientID));
 		// No message
 		if (messages.length == 0) {
-			setTimeout(this.getMessagesFromServer.bind(this), 3000);
+			setTimeout(this.getMessagesFromServer.bind(this), 1000);
 			return;
 		}
 		// Handle message
 		for (var msg of messages) {
 			this.messageQueue.push(msg)
 		}
-		setTimeout(this.getMessagesFromServer.bind(this), 500);
+		setTimeout(this.getMessagesFromServer.bind(this), 1000);
 	}
 	async messageHandleLoop() {
 		while (true) {
@@ -449,6 +488,11 @@ class Main {
 			if (entity != null) return;
 			entity = this.game.assets.deserializeEntity(JSON.parse(message[1]))
 			this.game.entities.push(entity)
+		} else if (message[0] == "set_me") {
+			var entity = this.game.getEntityByID(JSON.parse(message[1]))
+			if (entity == null) throw new Error("can't set `me` to a nonexistent entity")
+			if (! (entity instanceof Player)) throw new Error("can't set `me` to a non-player entity")
+			this.game.me = entity
 		} else if (message[0] == "move_entity") {
 			var entity = this.game.getEntityByID(Number(message[1]))
 			if (entity == null) throw new Error("Can't set position of nonexistent entity")
@@ -458,6 +502,10 @@ class Main {
 			entity.x = Number(message[2])
 			entity.y = Number(message[3])
 			entity.verifyVisible(this.game)
+			// Remove target for player
+			if (entity == this.game.me && this.game.me.target != null && entity.x == this.game.me.target.x && entity.y == this.game.me.target.y) {
+				this.game.me.target = null
+			}
 		} else {
 			console.log("Unknown message!", message)
 		}
