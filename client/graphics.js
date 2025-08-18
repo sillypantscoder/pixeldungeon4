@@ -57,6 +57,14 @@ class Surface {
 		cropped.context.drawImage(this.canvas, x, y, width, height, 0, 0, width, height)
 		return cropped
 	}
+	flipHorizontally() {
+		var flipped = new Surface(this.canvas.width, this.canvas.height, "transparent")
+		flipped.context.translate(this.canvas.width, 0)
+		flipped.context.scale(-1, 1)
+		flipped.context.drawImage(this.canvas, 0, 0)
+		flipped.context.setTransform(1, 0, 0, 1, 0, 0) // Reset transformation matrix
+		return flipped
+	}
 	/**
 	 * @param {ArrayBuffer} arrayBuffer
 	 * @returns {Promise<Surface>}

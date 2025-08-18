@@ -252,6 +252,7 @@ class SpritesheetDisplay {
 		this.currentAnimation = initialAnimation
 		this.currentAnimationPos = 0
 		this.frameTime = 0
+		this.flipped = false
 	}
 	nextFrame() {
 		this.frameTime += 1
@@ -277,7 +278,9 @@ class SpritesheetDisplay {
 	}
 	getFrame() {
 		var image_pos = this.animations[this.currentAnimation].frames[this.currentAnimationPos]
-		return this.surfaces[`${image_pos.x},${image_pos.y}`]
+		var image = this.surfaces[`${image_pos.x},${image_pos.y}`]
+		if (this.flipped) return image.flipHorizontally()
+		else return image
 	}
 }
 
@@ -302,6 +305,14 @@ class Actor {
 		if (this.x > targetX) this.x -= Actor.ACTOR_MOVE_SPEED;
 		if (this.y < targetY) this.y += Actor.ACTOR_MOVE_SPEED;
 		if (this.y > targetY) this.y -= Actor.ACTOR_MOVE_SPEED;
+	}
+	/**
+	 * @param {string} name
+	 */
+	setAnimation(name) {
+		if (this.sprites.currentAnimation == name) return;
+		this.sprites.currentAnimation = name
+		this.sprites.currentAnimationPos = 0
 	}
 	/**
 	 * @param {string} entityID
@@ -615,6 +626,8 @@ class Main {
 			if (entity == null) throw new Error("Can't set position of nonexistent entity")
 			// Wait for animation to finish
 			while (entity.x != entity.actor?.x || entity.y != entity.actor?.y) await new Promise((resolve) => requestAnimationFrame(resolve))
+			// Set direction
+			entity.actor.sprites.flipped = Number(message[2]) < entity.x
 			// Set position
 			entity.x = Number(message[2])
 			entity.y = Number(message[3])
@@ -625,6 +638,10 @@ class Main {
 			this.game.entities.splice(this.game.entities.indexOf(entity), 1)
 		} else if (message[0] == "clear_target") {
 			this.game.me.target = null
+		} else if (message[0] == "set_animation") {
+			var entity = this.game.getEntityByID(Number(message[1]))
+			if (entity == null) throw new Error("Can't set animation of nonexistent entity")
+			entity.actor?.setAnimation(message[2])
 		} else {
 			console.log("Unknown message!", message)
 		}

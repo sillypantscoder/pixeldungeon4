@@ -1,5 +1,7 @@
 package com.sillypantscoder.pixeldungeon4.actions;
 
+import java.util.Optional;
+
 import com.sillypantscoder.pixeldungeon4.Game;
 import com.sillypantscoder.pixeldungeon4.entities.Entity;
 import com.sillypantscoder.pixeldungeon4.entities.Player;
@@ -13,6 +15,29 @@ public abstract class Action<T extends Entity> {
 		this.time = time;
 	}
 	public abstract void execute(Game game);
+	public static class WaitAction extends Action<Entity> {
+		public WaitAction(Entity target, int time) {
+			super(target, time);
+		}
+		public void execute(Game game) {
+			// Update time
+			this.entity.time += this.time;
+			// Send idle animation to clients
+			if (this.entity instanceof TileEntity tileEntity) {
+				for (String playerID : game.messages.keySet()) {
+					Player player = game.getPlayerByID(playerID);
+					if (player == tileEntity || game.level.isLocVisible(player.x, player.y, tileEntity.x, tileEntity.y)) {
+						// Set animation
+						game.messages.get(playerID).add(new String[] {
+							"set_animation",
+							String.valueOf(tileEntity.id),
+							"move"
+						});
+					}
+				}
+			}
+		}
+	}
 	public static class MoveAction extends Action<TileEntity> {
 		public int targetX;
 		public int targetY;
@@ -32,6 +57,8 @@ public abstract class Action<T extends Entity> {
 			// Entity position
 			this.entity.x = this.targetX;
 			this.entity.y = this.targetY;
+			// Update time
+			this.entity.time += this.time;
 			// Inform clients about this update
 			for (String playerID : game.messages.keySet()) {
 				Player player = game.getPlayerByID(playerID);
@@ -52,7 +79,12 @@ public abstract class Action<T extends Entity> {
 						String.valueOf(this.entity.x),
 						String.valueOf(this.entity.y)
 					});
-					// TODO: Set animation
+					// Set animation
+					game.messages.get(playerID).add(new String[] {
+						"set_animation",
+						String.valueOf(this.entity.id),
+						"move"
+					});
 				} else {
 					// Remove entity if it exists and is no longer visible
 					if (player.visibleEntities.contains(this.entity)) {
@@ -65,12 +97,16 @@ public abstract class Action<T extends Entity> {
 					}
 				}
 			}
+			// TODO: Split all this player-specific stuff into a method (e.g. TileEntity.afterMove(Game))
 			if (this.entity instanceof Player targetPlayer) {
-				if (targetPlayer.target.map((v) -> (targetPlayer.x == v.getX()) && (targetPlayer.y == v.getY())).orElse(false)) targetPlayer.sendMessage.accept(new String[] { "clear_target" });
+				if (targetPlayer.target.map((v) -> (targetPlayer.x == v.getX()) && (targetPlayer.y == v.getY())).orElse(false)) {
+					// Clear player target
+					targetPlayer.sendMessage.accept(new String[] { "clear_target" });
+					targetPlayer.sendMessage.accept(new String[] { "set_animation", String.valueOf(targetPlayer.id), "idle" });
+					targetPlayer.target = Optional.empty();
+				}
 				targetPlayer.sendVision(game.level);
 			}
-			// Update time
-			this.entity.time += this.time;
 		}
 	}
 }
