@@ -10,7 +10,7 @@ import com.sun.net.httpserver.HttpHandler;
 public class HttpServer {
 	public HttpServer(int port_number, RequestHandler handler) {
 		try {
-			InetSocketAddress addr = new InetSocketAddress("127.0.0.1", port_number);
+			InetSocketAddress addr = new InetSocketAddress("0.0.0.0", port_number);
 			com.sun.net.httpserver.HttpServer server = com.sun.net.httpserver.HttpServer.create(addr, 0);
 			server.createContext("/", new ProxyHttpHandler(handler));
 			server.setExecutor(java.util.concurrent.Executors.newFixedThreadPool(12));

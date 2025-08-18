@@ -13,11 +13,13 @@ public class Player extends LivingEntity {
 	public String playerID;
 	public Optional<PathfindingTarget> target;
 	public Consumer<String[]> sendMessage;
+	public ArrayList<TileEntity> visibleEntities;
 	public Player(String playerID, int time, int x, int y, Consumer<String[]> sendMessage) {
 		super(time, x, y, 10);
 		this.playerID = playerID;
 		this.target = Optional.empty();
 		this.sendMessage = sendMessage;
+		this.visibleEntities = new ArrayList<TileEntity>();
 	}
 	public String getTypeID() { return "player"; }
 	public void sendVision(Level level) {
@@ -34,12 +36,27 @@ public class Player extends LivingEntity {
 		// Entities
 		for (Entity e : level.entities) {
 			if (e instanceof TileEntity tileEntity) {
-				if (! level.isLocVisible(this.x, this.y, tileEntity.x, tileEntity.y)) continue;
-				String[] data = new String[] {
-					"create_entity",
-					tileEntity.serialize().toString()
-				};
-				this.sendMessage.accept(data);
+				if (level.isLocVisible(this.x, this.y, tileEntity.x, tileEntity.y)) {
+					// Create entity if it does not exist
+					if (! this.visibleEntities.contains(e)) {
+						this.visibleEntities.add(tileEntity);
+						String[] data = new String[] {
+							"create_entity",
+							tileEntity.serialize().toString()
+						};
+						this.sendMessage.accept(data);
+					}
+				} else {
+					// Remove entity if it exists
+					if (this.visibleEntities.contains(e)) {
+						this.visibleEntities.remove(e);
+						String[] data = new String[] {
+							"remove_entity",
+							tileEntity.id + ""
+						};
+						this.sendMessage.accept(data);
+					}
+				}
 			}
 		}
 	}

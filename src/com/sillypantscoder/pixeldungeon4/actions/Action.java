@@ -36,18 +36,38 @@ public abstract class Action<T extends Entity> {
 			for (String playerID : game.messages.keySet()) {
 				Player player = game.getPlayerByID(playerID);
 				if (game.level.isLocVisible(player.x, player.y, previousX, previousY) || game.level.isLocVisible(player.x, player.y, this.targetX, this.targetY) || player == this.entity) {
+					// Create entity if it does not exist
+					if (! player.visibleEntities.contains(this.entity)) {
+						player.visibleEntities.add(this.entity);
+						String[] data = new String[] {
+							"create_entity",
+							this.entity.serialize().toString()
+						};
+						game.messages.get(playerID).add(data);
+					}
+					// Move entity
 					game.messages.get(playerID).add(new String[] {
 						"move_entity",
 						String.valueOf(this.entity.id),
 						String.valueOf(this.entity.x),
 						String.valueOf(this.entity.y)
 					});
-					// TODO: Create entities for clients that don't have them yet
 					// TODO: Set animation
+				} else {
+					// Remove entity if it exists and is no longer visible
+					if (player.visibleEntities.contains(this.entity)) {
+						player.visibleEntities.remove(this.entity);
+						String[] data = new String[] {
+							"remove_entity",
+							this.entity.id + ""
+						};
+						player.sendMessage.accept(data);
+					}
 				}
 			}
-			if (this.entity instanceof Player player) {
-				player.sendVision(game.level);
+			if (this.entity instanceof Player targetPlayer) {
+				if (targetPlayer.target.map((v) -> (targetPlayer.x == v.getX()) && (targetPlayer.y == v.getY())).orElse(false)) targetPlayer.sendMessage.accept(new String[] { "clear_target" });
+				targetPlayer.sendVision(game.level);
 			}
 			// Update time
 			this.entity.time += this.time;

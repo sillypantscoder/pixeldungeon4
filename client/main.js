@@ -111,7 +111,7 @@ class Utils {
 		dy = y2 - y1;
 
 		// Calculate error
-		var error = dx / 2.0;
+		var error = Math.trunc(dx / 2.0);
 		var ystep = -1;
 		if (y1 < y2) ystep = 1;
 
@@ -121,7 +121,7 @@ class Utils {
 		var points = [];
 		for (var x = x1; x < x2 + 1; x++) {
 			var coord = { x, y };
-			if (is_steep) coord = { y, x };
+			if (is_steep) coord = { x: y, y: x };
 			points.push(coord);
 			error -= Math.abs(dy);
 			if (error < 0) {
@@ -345,15 +345,6 @@ class Entity {
 		this.actor.moveFrame(this.x, this.y)
 		return this.actor.sprites.getFrame()
 	}
-	/**
-	 * @param {Game} game
-	 */
-	verifyVisible(game) {
-		var tile = game.level[this.x][this.y]
-		if (tile.visibility == 0) {
-			game.removeEntity(this)
-		}
-	}
 }
 class LivingEntity extends Entity {
 	/**
@@ -386,8 +377,8 @@ class Player extends LivingEntity {
 	/**
 	 * @param {Game} game
 	 */
-	verifyVisible(game) {
-		super.verifyVisible(game);
+	updateLight(game) {
+		if (this != game.me) return;
 		// Update level light
 		for (var x = 0; x < game.level.length; x++) {
 			for (var y = 0; y < game.level[0].length; y++) {
@@ -395,11 +386,6 @@ class Player extends LivingEntity {
 				if (tile.visibility != 2) continue;
 				if (! game.isLocVisible(this.x, this.y, x, y)) tile.visibility = 1
 			}
-		}
-		// Update all entities
-		for (var entity of game.entities) {
-			if (entity == this) continue;
-			entity.verifyVisible(game);
 		}
 	}
 }
@@ -632,7 +618,11 @@ class Main {
 			// Set position
 			entity.x = Number(message[2])
 			entity.y = Number(message[3])
-			entity.verifyVisible(this.game)
+			if (entity == this.game.me) this.game.me.updateLight(this.game)
+		} else if (message[0] == "remove_entity") {
+			var entity = this.game.getEntityByID(Number(message[1]))
+			if (entity == null) throw new Error("Can't remove nonexistent entity")
+			this.game.entities.splice(this.game.entities.indexOf(entity), 1)
 		} else if (message[0] == "clear_target") {
 			this.game.me.target = null
 		} else {
