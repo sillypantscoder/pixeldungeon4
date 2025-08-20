@@ -15,9 +15,20 @@ public abstract class Action<T extends Entity> {
 		this.time = time;
 	}
 	public abstract void execute(Game game);
+	public static Action<?> create(Entity e, String actionName, double timeScale, int extraTime) {
+		Action<?> action = null;
+		if (actionName.equals("wait")) {
+			action = new WaitAction(e);
+		}
+		if (action == null) throw new IllegalArgumentException("Unknown action name: " + actionName);
+		// System.out.print("(" + action.time + " * " + timeScale + ") + " + extraTime);
+		action.time = (int)(action.time * timeScale) + extraTime;
+		// System.out.println(" => " + action.time);
+		return action;
+	}
 	public static class WaitAction extends Action<Entity> {
-		public WaitAction(Entity target, int time) {
-			super(target, time);
+		public WaitAction(Entity target) {
+			super(target, 1);
 		}
 		public void execute(Game game) {
 			// Update time
@@ -31,7 +42,7 @@ public abstract class Action<T extends Entity> {
 						game.messages.get(playerID).add(new String[] {
 							"set_animation",
 							String.valueOf(tileEntity.id),
-							"move"
+							"idle"
 						});
 					}
 				}
@@ -41,8 +52,8 @@ public abstract class Action<T extends Entity> {
 	public static class MoveAction extends Action<TileEntity> {
 		public int targetX;
 		public int targetY;
-		public MoveAction(TileEntity target, int time, int targetX, int targetY) {
-			super(target, time);
+		public MoveAction(TileEntity target, int targetX, int targetY) {
+			super(target, 1);
 			this.targetX = targetX;
 			this.targetY = targetY;
 		}

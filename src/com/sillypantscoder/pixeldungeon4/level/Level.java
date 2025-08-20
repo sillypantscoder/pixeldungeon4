@@ -61,9 +61,12 @@ public class Level {
 			}
 		}
 		if (minimumTimeEntity != null) {
-			// System.out.println(minimumTimeEntity);
-			Optional<Action<?>> action = minimumTimeEntity.getAction(game.level);
+			Entity targetEntity = minimumTimeEntity;
+			// Find and do action
+			System.out.print(targetEntity.toString() + " - time: " + targetEntity.time);
+			Optional<Action<?>> action = targetEntity.getAction(game.level);
 			action.ifPresent((a) -> a.execute(game));
+			System.out.println(action.map((v) -> " - new time: " + targetEntity.time).orElse(" - no action"));
 			return action.isPresent();
 		} else return false;
 	}

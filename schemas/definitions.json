@@ -1,0 +1,94 @@
+{
+	"$schema": "https://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"properties": {
+		"behavior": {
+			"oneOf": [
+				{ "type": "object", "properties": {
+					"type": { "type": "string", "enum": ["return-action"] },
+					"action": { "type": "string" },
+					"time_scale": { "$ref": "#/properties/number_provider" },
+					"extra_time": { "$ref": "#/properties/number_provider" }
+				}, "required": ["type", "action", "time_scale", "extra_time"] },
+				{ "type": "object", "properties": {
+					"type": { "type": "string", "enum": ["remove-target"] }
+				}, "required": ["type"] },
+				{ "type": "object", "properties": {
+					"type": { "type": "string", "enum": ["choose-target-position"] },
+					"min_distance": { "$ref": "#/properties/number_provider" },
+					"max_distance": { "$ref": "#/properties/number_provider" }
+				}, "required": ["type", "min_distance", "max_distance"] },
+				{ "type": "object", "properties": {
+					"type": { "type": "string", "enum": ["find-target-entity"] },
+					"entity_weight": { "$ref": "#/properties/number_provider" }
+				}, "required": ["type", "entity_weight"] },
+				{ "type": "object", "properties": {
+					"type": { "type": "string", "enum": ["if"] },
+					"condition": { "$ref": "#/properties/condition" },
+					"ifTrue": { "$ref": "#/properties/behavior" },
+					"ifFalse": { "oneOf": [{ "type": "null" }, { "$ref": "#/properties/behavior" }] }
+				}, "required": ["type", "condition", "ifTrue", "ifFalse"] }
+			]
+		},
+		"number_provider": {
+			"oneOf": [
+				{ "type": "number" },
+				{ "type": "object", "properties": {
+					"type": { "type": "string", "enum": ["math"] },
+					"operation": { "type": "string", "enum": ["add", "subtract", "multiply", "divide", "exponent"] },
+					"argument1": { "$ref": "#/properties/number_provider" },
+					"argument2": { "$ref": "#/properties/number_provider" }
+				}, "required": ["type", "operation", "argument1", "argument2"] },
+				{ "type": "object", "properties": {
+					"type": { "type": "string", "enum": ["round"] },
+					"mode": { "type": "string", "enum": ["normal", "floor", "ceil"] },
+					"argument": { "$ref": "#/properties/number_provider" }
+				}, "required": ["type", "mode", "argument"] },
+				{ "type": "object", "properties": {
+					"type": { "type": "string", "enum": ["uniform"] },
+					"min": { "$ref": "#/properties/number_provider" },
+					"max": { "$ref": "#/properties/number_provider" }
+				}, "required": ["type", "min", "max"] },
+				{ "type": "object", "properties": {
+					"type": { "type": "string", "enum": ["uniform-float"] },
+					"min": { "$ref": "#/properties/number_provider" },
+					"max": { "$ref": "#/properties/number_provider" }
+				}, "required": ["type", "min", "max"] },
+				{ "type": "object", "properties": {
+					"type": { "type": "string", "enum": ["triangular"] },
+					"min": { "$ref": "#/properties/number_provider" },
+					"center": { "$ref": "#/properties/number_provider" },
+					"max": { "$ref": "#/properties/number_provider" }
+				}, "required": ["type", "min", "center", "max"] },
+				{ "type": "object", "properties": {
+					"type": { "type": "string", "enum": ["if"] },
+					"condition": { "$ref": "#/properties/condition" },
+					"ifTrue": { "$ref": "#/properties/number_provider" },
+					"ifFalse": { "$ref": "#/properties/number_provider" }
+				}, "required": ["type", "condition", "ifTrue", "ifFalse"] }
+			]
+		},
+		"condition": {
+			"oneOf": [
+				{ "type": "object", "properties": {
+					"type": { "type": "string", "enum": ["and", "or"] },
+					"argument1": { "$ref": "#/properties/condition" },
+					"argument2": { "$ref": "#/properties/condition" }
+				}, "required": ["type", "argument1", "argument2"] },
+				{ "type": "object", "properties": {
+					"type": { "type": "string", "enum": ["not"] },
+					"argument1": { "$ref": "#/properties/condition" },
+					"argument2": { "$ref": "#/properties/condition" }
+				}, "required": ["type", "argument"] },
+				{ "type": "object", "properties": {
+					"type": { "type": "string", "enum": ["less-than", "greater-than", "less-than-equal-to", "greater-than-equal-to", "equal-to"] },
+					"argument1": { "$ref": "#/properties/number_provider" },
+					"argument2": { "$ref": "#/properties/number_provider" }
+				}, "required": ["type", "argument1", "argument2"] },
+				{ "type": "object", "properties": {
+					"type": { "type": "string", "enum": ["has-target", "can-attack-target"] }
+				}, "required": ["type"] }
+			]
+		}
+	}
+}

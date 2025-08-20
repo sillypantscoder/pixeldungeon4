@@ -1,0 +1,12 @@
+{
+	"$schema": "../../../schemas/monster_definition.json",
+	"health": 6,
+	"behavior": [
+		{
+			"type": "return-action",
+			"action": "wait",
+			"time_scale": 1,
+			"extra_time": 0
+		}
+	]
+}

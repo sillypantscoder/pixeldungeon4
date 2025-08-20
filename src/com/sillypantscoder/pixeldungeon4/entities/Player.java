@@ -7,7 +7,6 @@ import java.util.function.Consumer;
 
 import com.sillypantscoder.pixeldungeon4.actions.Action;
 import com.sillypantscoder.pixeldungeon4.level.Level;
-import com.sillypantscoder.utils.JSONObject;
 
 public class Player extends LivingEntity {
 	public String playerID;
@@ -81,7 +80,7 @@ public class Player extends LivingEntity {
 				this.sendMessage.accept(new String[] { "clear_target" });
 				return;
 			}
-			action.set(Optional.of(new Action.MoveAction(this, 1, path[1][0], path[1][1])));
+			action.set(Optional.of(new Action.MoveAction(this, path[1][0], path[1][1])));
 		});
 		return action.get();
 	}
@@ -97,11 +96,5 @@ public class Player extends LivingEntity {
 		if (this.target.isEmpty()) {
 			this.target = Optional.of(new PathfindingTarget.StaticPosition(x, y));
 		}
-	}
-	public JSONObject serialize() {
-		JSONObject obj = super.serialize();
-		obj.set("health", this.health);
-		obj.set("maxHealth", this.maxHealth);
-		return obj;
 	}
 }

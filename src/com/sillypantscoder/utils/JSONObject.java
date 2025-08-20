@@ -135,6 +135,7 @@ public class JSONObject {
 			b.consume(',');
 			b.consumeWhitespace();
 		}
+		this.entries_array.put(name, l);
 	}
 	// WRITING METHODS
 	public String write() {

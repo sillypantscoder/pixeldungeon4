@@ -1,0 +1,17 @@
+{
+	"$schema": "https://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"properties": {
+		"health": { "$ref": "definitions.json#/properties/number_provider" },
+		"behavior": {
+			"type": "array",
+			"items": {
+				"$ref": "definitions.json#/properties/behavior"
+			}
+		}
+	},
+	"required": [
+		"health",
+		"behavior"
+	]
+}

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.sillypantscoder.pixeldungeon4.entities.Entity;
+import com.sillypantscoder.pixeldungeon4.entities.Monster;
 import com.sillypantscoder.pixeldungeon4.entities.Player;
 import com.sillypantscoder.pixeldungeon4.entities.TileEntity;
 import com.sillypantscoder.pixeldungeon4.level.Level;
@@ -19,6 +20,9 @@ public class Game {
 	public Game() {
 		this.level = SubdivisionLevelGeneration.generateLevel(30);
 		this.messages = new HashMap<String, ArrayList<String[]>>();
+		// spawn a rat
+		this.addFreshEntity(this.createMonsterEntity("rat"));
+		this.addFreshEntity(this.createMonsterEntity("rat"));
 	}
 	public String loginPlayer() {
 		// Get player ID
@@ -57,6 +61,7 @@ public class Game {
 		HashMap<String, byte[]> data = new HashMap<String, byte[]>();
 		for (String folder_name : new String[] {
 			"data/definitions/entity_spritesheets",
+			"data/definitions/monster",
 			"data/definitions/tile",
 			"data/textures/entity",
 			"data/textures/special",
@@ -80,6 +85,10 @@ public class Game {
 	public Player createPlayerEntity(String playerID) {
 		int[] spawnPoint = this.level.getSpawnPoint();
 		return new Player(playerID, this.level.getNewEntityTime(), spawnPoint[0], spawnPoint[1], messages.get(playerID)::add);
+	}
+	public Monster createMonsterEntity(String monsterID) {
+		int[] spawnPoint = this.level.getSpawnPoint();
+		return new Monster(monsterID, this.level.getNewEntityTime(), spawnPoint[0], spawnPoint[1]);
 	}
 	public void addFreshEntity(Entity e) {
 		// *Not related to Minecraft

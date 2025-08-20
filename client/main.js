@@ -150,16 +150,20 @@ class Utils {
 		return ret;
 	}
 }
+/**
+ * @typedef {{ collisionType: "none" | "normal" | "wall", canSeeThrough: boolean }} TileDefinition
+ * @typedef {{ tileSize: number, initialAnimation: string, animations: Object<string, { frames: { x: number, y: number }[], next: string }> }} EntitySpritesheetDefinition
+ * @typedef {{ }} MonsterDefinition
+ */
 class AssetManager {
 	constructor() {
 		/**
-		 * @typedef {{ collisionType: "none" | "normal" | "wall", canSeeThrough: boolean }} TileDefinition
-		 * @typedef {{ tileSize: number, initialAnimation: string, animations: Object<string, { frames: { x: number, y: number }[], next: string }> }} EntitySpritesheetDefinition
-		 * @type {{ definitions: { tile: Object<string, TileDefinition>, entity_spritesheets: Object<string, EntitySpritesheetDefinition> }, textures: Object<string, Object<string, { normal: Surface, dark: Surface }>> }}
+		 * @type {{ definitions: { tile: Object<string, TileDefinition>, monster: Object<string, MonsterDefinition>, entity_spritesheets: Object<string, EntitySpritesheetDefinition> }, textures: Object<string, Object<string, { normal: Surface, dark: Surface }>> }}
 		 */
 		this.assets = {
 			"definitions": {
 				"entity_spritesheets": {},
+				"monster": {},
 				"tile": {}
 			},
 			"textures": {
@@ -192,6 +196,9 @@ class AssetManager {
 				if (filename[1] == "entity_spritesheets") {
 					const decoder = new TextDecoder('utf-8')
 					this.assets.definitions.entity_spritesheets[filename[2]] = JSON.parse(decoder.decode(fileData))
+				} else if (filename[1] == "monster") {
+					const decoder = new TextDecoder('utf-8')
+					this.assets.definitions.monster[filename[2]] = JSON.parse(decoder.decode(fileData))
 				} else if (filename[1] == "tile") {
 					const decoder = new TextDecoder('utf-8')
 					this.assets.definitions.tile[filename[2]] = JSON.parse(decoder.decode(fileData))
@@ -222,13 +229,23 @@ class AssetManager {
 		return this.assets.definitions.tile[id]
 	}
 	/**
+	 * @param {string} id
+	 * @returns {MonsterDefinition | undefined}
+	 */
+	getMonsterDefinition(id) {
+		return this.assets.definitions.monster[id]
+	}
+	/**
 	 * @param {{ type: string} & Object<string, any>} entity_data
 	 * @returns {Entity}
 	 */
 	deserializeEntity(entity_data) {
 		if (entity_data.type == "player") {
-			var entity = new Player(entity_data.id, entity_data.x, entity_data.y, entity_data.health, entity_data.maxHealth);
-			return entity
+			var player = new Player(entity_data.id, entity_data.x, entity_data.y, entity_data.health, entity_data.maxHealth);
+			return player
+		} else if (Object.keys(this.assets.definitions.monster).includes(entity_data.type)) {
+			var monster = new Monster(entity_data.id, entity_data.type, entity_data.x, entity_data.y, entity_data.health, entity_data.maxHealth)
+			return monster
 		}
 		throw new Error("Entity type not found: " + JSON.stringify(entity_data))
 	}
@@ -399,6 +416,23 @@ class Player extends LivingEntity {
 			}
 		}
 	}
+}
+class Monster extends LivingEntity {
+	/**
+	 * @param {number} id
+	 * @param {string} typeID
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} health
+	 * @param {number} maxHealth
+	 */
+	constructor(id, typeID, x, y, health, maxHealth) {
+		super(id, x, y, health, maxHealth)
+		this.typeID = typeID
+		/** @type {null | Entity | { x: number, y: number }} */
+		this.target = null
+	}
+	getEntityID() { return this.typeID }
 }
 
 /** @typedef {{ state: string, visibility: 0 | 1 | 2 }} TileState */
