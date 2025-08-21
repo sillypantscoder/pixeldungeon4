@@ -79,7 +79,7 @@ public class JSONObject {
 		// 	data.consume('n'); data.consume('u'); data.consume('l'); data.consume('l');
 		// 	this.entries_null.put(name, null);
 		// }
-		else throw new RuntimeException("Unknown value type! Data:\n" + data.toString());
+		else throw new RuntimeException("Unknown value type! Next char: '" + data.nextChar() + "', Data:\n" + data.toString());
 	}
 	public static String readString(Buffer b) {
 		b.consume('\"');
@@ -122,6 +122,13 @@ public class JSONObject {
 	public void readArray(String name, Buffer b) {
 		b.consume('[');
 		ArrayList<Object> l = new ArrayList<Object>();
+		b.consumeWhitespace();
+		if (b.nextChar() == ']') {
+			// Empty array
+			b.read();
+			this.entries_array.put(name, l);
+			return;
+		}
 		while (true) {
 			b.consumeWhitespace();
 			JSONObject objectHolder = new JSONObject();

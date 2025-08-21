@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.sillypantscoder.pixeldungeon4.actions.Action;
 import com.sillypantscoder.pixeldungeon4.entitydef.BehaviorCommand;
+import com.sillypantscoder.pixeldungeon4.entitydef.MonsterSituation;
 import com.sillypantscoder.pixeldungeon4.level.Level;
 import com.sillypantscoder.pixeldungeon4.registries.MonsterType;
 
@@ -13,7 +14,7 @@ public class Monster extends LivingEntity {
 	public Optional<PathfindingTarget> target;
 	public ArrayList<BehaviorCommand> behavior;
 	public Monster(String typeID, int time, int x, int y) {
-		super(time, x, y, (int)(Math.round(MonsterType.allMonsterTypes.get(typeID).health.get())));
+		super(time, x, y, (int)(Math.round(MonsterType.allMonsterTypes.get(typeID).health.get(new MonsterSituation(null, null, Optional.empty())))));
 		this.typeID = typeID;
 		this.target = Optional.empty();
 		this.behavior = MonsterType.allMonsterTypes.get(typeID).behavior;
@@ -41,7 +42,7 @@ public class Monster extends LivingEntity {
 		// });
 		// Get action from behavior
 		for (BehaviorCommand command : this.behavior) {
-			Optional<Action<?>> result = command.execute(this);
+			Optional<Action<?>> result = command.execute(new MonsterSituation(level, this, this.target));
 			if (result.isPresent()) {
 				return result;
 			}

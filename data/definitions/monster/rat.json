@@ -3,10 +3,53 @@
 	"health": 6,
 	"behavior": [
 		{
-			"type": "return-action",
-			"action": "wait",
-			"time_scale": 1,
-			"extra_time": 0
+			"type": "if",
+			"condition": {
+				"type": "and",
+				"argument1": {
+					"type": "not",
+					"argument": {
+						"type": "has-target",
+						"minimum_target_type": "any"
+					}
+				},
+				"argument2": {
+					"type": "less-than",
+					"argument1": { "type": "uniform-float", "min": 0, "max": 1 },
+					"argument2": 0.1
+				}
+			},
+			"ifTrue": [
+				{
+					"type": "choose-target-position",
+					"min_distance": 3,
+					"max_distance": 7
+				}
+			],
+			"ifFalse": []
+		},
+		{
+			"type": "if",
+			"condition": {
+				"type": "has-target",
+				"minimum_target_type": "any"
+			},
+			"ifTrue": [
+				{
+					"type": "return-action",
+					"action": "pathfind",
+					"time_scale": 1,
+					"extra_time": 0
+				}
+			],
+			"ifFalse": [
+				{
+					"type": "return-action",
+					"action": "wait",
+					"time_scale": 1,
+					"extra_time": 0
+				}
+			]
 		}
 	]
 }

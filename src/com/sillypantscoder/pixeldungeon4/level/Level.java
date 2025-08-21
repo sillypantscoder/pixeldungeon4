@@ -31,7 +31,7 @@ public class Level {
 		ArrayList<int[]> possibleSpawns = new ArrayList<int[]>();
 		for (int x = 0; x < this.tiles.length; x++) {
 			for (int y = 0; y < this.tiles[0].length; y++) {
-				if (TileType.allTileTypes.get(tiles[x][y].state).collisionType == TileType.CollisionType.NORMAL) {
+				if (tiles[x][y].getData().collisionType == TileType.CollisionType.NORMAL) {
 					possibleSpawns.add(new int[] { x, y });
 				}
 			}
@@ -63,10 +63,10 @@ public class Level {
 		if (minimumTimeEntity != null) {
 			Entity targetEntity = minimumTimeEntity;
 			// Find and do action
-			System.out.print(targetEntity.toString() + " - time: " + targetEntity.time);
+			// System.out.print(targetEntity.toString() + " - time: " + targetEntity.time);
 			Optional<Action<?>> action = targetEntity.getAction(game.level);
 			action.ifPresent((a) -> a.execute(game));
-			System.out.println(action.map((v) -> " - new time: " + targetEntity.time).orElse(" - no action"));
+			// System.out.println(action.map((v) -> " - new time: " + targetEntity.time).orElse(" - no action"));
 			return action.isPresent();
 		} else return false;
 	}
@@ -74,8 +74,8 @@ public class Level {
 		if (((x1-x2)*(x1-x2)) + ((y1-y2)*(y1-y2)) > 64) return false;
 		int[][] points = LinePoints.get_line(new int[] { x1, y1 }, new int[] { x2, y2 });
 		for (int i = 1; i < points.length - 1; i++) {
-			String stateString = this.tiles[points[i][0]][points[i][1]].state;
-			if (! TileType.allTileTypes.get(stateString).canSeeThrough) return false;
+			Tile state = this.tiles[points[i][0]][points[i][1]];
+			if (! state.getData().canSeeThrough) return false;
 		}
 		return true;
 	}
@@ -84,8 +84,8 @@ public class Level {
 		int[][] board = new int[this.tiles.length][this.tiles[0].length];
 		for (int x = 0; x < this.tiles.length; x++) {
 			for (int y = 0; y < this.tiles[0].length; y++) {
-				String state = this.tiles[x][y].state;
-				boolean canWalkOn = TileType.allTileTypes.get(state).collisionType == TileType.CollisionType.NORMAL;
+				Tile state = this.tiles[x][y];
+				boolean canWalkOn = state.getData().collisionType == TileType.CollisionType.NORMAL;
 				board[x][y] = canWalkOn ? 1 : 0;
 			}
 		}

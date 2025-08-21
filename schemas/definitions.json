@@ -25,8 +25,8 @@
 				{ "type": "object", "properties": {
 					"type": { "type": "string", "enum": ["if"] },
 					"condition": { "$ref": "#/properties/condition" },
-					"ifTrue": { "$ref": "#/properties/behavior" },
-					"ifFalse": { "oneOf": [{ "type": "null" }, { "$ref": "#/properties/behavior" }] }
+					"ifTrue": { "type": "array", "items": { "$ref": "#/properties/behavior" } },
+					"ifFalse": { "type": "array", "items": { "$ref": "#/properties/behavior" } }
 				}, "required": ["type", "condition", "ifTrue", "ifFalse"] }
 			]
 		},
@@ -86,7 +86,13 @@
 					"argument2": { "$ref": "#/properties/number_provider" }
 				}, "required": ["type", "argument1", "argument2"] },
 				{ "type": "object", "properties": {
-					"type": { "type": "string", "enum": ["has-target", "can-attack-target"] }
+					"type": { "type": "string", "enum": ["has-target"] },
+					"minimum_target_type": { "type": "string", "enum": ["any", "entity", "living-entity", "attackable"] }
+				}, "required": ["type"] },
+				{ "type": "object", "properties": {
+					"type": { "type": "string", "enum": ["is-entity-type"] },
+					"use_current_target": { "type": "boolean" },
+					"entity_type": { "type": "string" }
 				}, "required": ["type"] }
 			]
 		}

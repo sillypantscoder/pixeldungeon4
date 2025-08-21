@@ -7,7 +7,7 @@ import com.sillypantscoder.utils.JSONObject;
 import com.sillypantscoder.utils.Random;
 
 public abstract class NumberProvider {
-	public abstract double get();
+	public abstract double get(MonsterSituation situation);
 	public static NumberProvider create(JSONObject object, String key) {
 		if (object.entries_number.containsKey(key)) {
 			return new PlainNumber(object.getNumber(key));
@@ -17,11 +17,11 @@ public abstract class NumberProvider {
 	}
 	public static NumberProvider create(JSONObject object) {
 		String type = object.getString("type");
-		if (type == "math") return NPMath.create(object);
-		else if (type == "round") return Round.create(object);
-		else if (type == "uniform") return Uniform.create(object);
-		else if (type == "uniform-float") return UniformFloat.create(object);
-		else if (type == "triangular") return Triangular.create(object);
+		if (type.equals("math")) return NPMath.create(object);
+		else if (type.equals("round")) return Round.create(object);
+		else if (type.equals("uniform")) return Uniform.create(object);
+		else if (type.equals("uniform-float")) return UniformFloat.create(object);
+		else if (type.equals("triangular")) return Triangular.create(object);
 		else throw new IllegalArgumentException("Unknown number provider type: " + type);
 	}
 	public static class PlainNumber extends NumberProvider {
@@ -29,7 +29,7 @@ public abstract class NumberProvider {
 		public PlainNumber(double n) {
 			this.n = n;
 		}
-		public double get() { return this.n; }
+		public double get(MonsterSituation situation) { return this.n; }
 	}
 	public static class NPMath extends NumberProvider {
 		public MathOperation operation;
@@ -40,7 +40,7 @@ public abstract class NumberProvider {
 			this.argument1 = argument1;
 			this.argument2 = argument2;
 		}
-		public double get() { return this.operation.apply(this.argument1.get(), this.argument2.get()); }
+		public double get(MonsterSituation situation) { return this.operation.apply(this.argument1.get(situation), this.argument2.get(situation)); }
 		public static NPMath create(JSONObject object) { return new NPMath(MathOperation.valueOf(object.getString("operation")), NumberProvider.create(object, "argument1"), NumberProvider.create(object, "argument2")); }
 		public static enum MathOperation {
 			ADD((a, b) -> a + b), SUBTRACT((a, b) -> a - b), MULTIPLY((a, b) -> a * b), DIVIDE((a, b) -> a / b), EXPONENT((a, b) -> Math.pow(a, b));
@@ -58,7 +58,7 @@ public abstract class NumberProvider {
 			this.mode = mode;
 			this.argument = argument;
 		}
-		public double get() { return this.mode.apply(this.argument.get()); }
+		public double get(MonsterSituation situation) { return this.mode.apply(this.argument.get(situation)); }
 		public static Round create(JSONObject object) { return new Round(RoundingMode.valueOf(object.getString("mode")), NumberProvider.create(object, "argument")); }
 		public static enum RoundingMode {
 			NORMAL((a) -> (double)(Math.round(a))), FLOOR((a) -> (double)(Math.floor(a))), CEILING((a) -> (double)(Math.ceil(a)));
@@ -76,7 +76,7 @@ public abstract class NumberProvider {
 			this.min = min;
 			this.max = max;
 		}
-		public double get() { return Random.randint(Math.round(this.min.get()), Math.round(this.max.get())); }
+		public double get(MonsterSituation situation) { return Random.randint(Math.round(this.min.get(situation)), Math.round(this.max.get(situation))); }
 		public static Uniform create(JSONObject object) { return new Uniform(NumberProvider.create(object, "min"), NumberProvider.create(object, "max")); }
 	}
 	public static class UniformFloat extends NumberProvider {
@@ -86,7 +86,7 @@ public abstract class NumberProvider {
 			this.min = min;
 			this.max = max;
 		}
-		public double get() { return Random.randfloat(this.min.get(), this.max.get()); }
+		public double get(MonsterSituation situation) { return Random.randfloat(this.min.get(situation), this.max.get(situation)); }
 		public static UniformFloat create(JSONObject object) { return new UniformFloat(NumberProvider.create(object, "min"), NumberProvider.create(object, "max")); }
 	}
 	public static class Triangular extends NumberProvider {
@@ -98,7 +98,7 @@ public abstract class NumberProvider {
 			this.center = center;
 			this.max = max;
 		}
-		public double get() { return Random.triangular(this.min.get(), this.center.get(), this.max.get()); }
+		public double get(MonsterSituation situation) { return Random.triangular(this.min.get(situation), this.center.get(situation), this.max.get(situation)); }
 		public static Triangular create(JSONObject object) { return new Triangular(NumberProvider.create(object, "min"), NumberProvider.create(object, "center"), NumberProvider.create(object, "max")); }
 	}
 }
