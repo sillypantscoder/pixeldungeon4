@@ -13,7 +13,7 @@ import com.sillypantscoder.utils.JSONObject;
 import com.sillypantscoder.utils.Random;
 
 public abstract class BehaviorCommand {
-	public abstract Optional<Action<?>> execute(MonsterSituation situation);
+	public abstract CommandResult<Optional<Action<?>>> execute(MonsterSituation situation);
 	public static BehaviorCommand create(JSONObject object) {
 		String type = object.getString("type");
 		if (type.equals("return-action")) return ReturnAction.create(object);
@@ -32,14 +32,17 @@ public abstract class BehaviorCommand {
 			this.timeScale = timeScale;
 			this.extraTime = extraTime;
 		}
-		public Optional<Action<?>> execute(MonsterSituation situation) { return Optional.of(Action.create(situation.level, situation.self, this.actionName, this.timeScale.get(situation), (int)(this.extraTime.get(situation)))); }
+		public CommandResult<Optional<Action<?>>> execute(MonsterSituation situation) {
+			Action<?> action = Action.create(situation.level, situation.self, this.actionName, this.timeScale.get(situation), (int)(this.extraTime.get(situation)));
+			return new CommandResult<Optional<Action<?>>>(Optional.of(action), "Returning action \"" + this.actionName + "\" with time value " + action.time);
+		}
 		public static ReturnAction create(JSONObject object) { return new ReturnAction(object.getString("action"), NumberProvider.create(object, "time_scale"), NumberProvider.create(object, "extra_time")); }
 	}
 	public static class RemoveTarget extends BehaviorCommand {
 		public RemoveTarget() {}
-		public Optional<Action<?>> execute(MonsterSituation situation) {
+		public CommandResult<Optional<Action<?>>> execute(MonsterSituation situation) {
 			situation.self.target = Optional.empty();
-			return Optional.empty();
+			return new CommandResult<Optional<Action<?>>>(Optional.empty(), "Removed target");
 		}
 	}
 	public static class ChooseTargetPosition extends BehaviorCommand {
@@ -49,7 +52,7 @@ public abstract class BehaviorCommand {
 			this.minDistance = minDistance;
 			this.maxDistance = maxDistance;
 		}
-		public Optional<Action<?>> execute(MonsterSituation situation) {
+		public CommandResult<Optional<Action<?>>> execute(MonsterSituation situation) {
 			for (int i = 0; i < 50; i++) {
 				double minDistance = this.minDistance.get(situation);
 				double maxDistance = this.maxDistance.get(situation);
@@ -70,10 +73,9 @@ public abstract class BehaviorCommand {
 				if (path.length == 0) continue;
 				// Save position and exit!
 				situation.self.target = Optional.of(new PathfindingTarget.StaticPosition(x, y));
-				System.out.println("target set to: " + x + ", " + y);
-				return Optional.empty();
+				return new CommandResult<Optional<Action<?>>>(Optional.empty(), "Target position set to: (" + x + ", " + y + ")");
 			}
-			return Optional.empty();
+			return new CommandResult<Optional<Action<?>>>(Optional.empty(), "Failed to choose target position");
 		}
 		public static ChooseTargetPosition create(JSONObject object) { return new ChooseTargetPosition(NumberProvider.create(object, "min_distance"), NumberProvider.create(object, "max_distance")); }
 	}
@@ -82,7 +84,7 @@ public abstract class BehaviorCommand {
 		public FindTargetEntity(NumberProvider entityWeight) {
 			this.entityWeight = entityWeight;
 		}
-		public Optional<Action<?>> execute(MonsterSituation situation) {
+		public CommandResult<Optional<Action<?>>> execute(MonsterSituation situation) {
 			// Get all entities
 			ArrayList<TileEntity> entities = new ArrayList<TileEntity>();
 			for (Entity e : situation.level.entities) {
@@ -99,6 +101,7 @@ public abstract class BehaviorCommand {
 			for (TileEntity entity : entities) {
 				// Get score
 				double score = this.entityWeight.get(new MonsterSituation(situation, entity));
+				if (score < 0) continue;
 				// Check if this is the best score
 				if (bestScoreEntity == null || score > bestScore) {
 					bestScoreEntity = entity;
@@ -108,9 +111,9 @@ public abstract class BehaviorCommand {
 			// If we found a target, set it and return an action
 			if (bestScoreEntity != null) {
 				situation.self.target = Optional.of(bestScoreEntity);
-				return Optional.empty();
+				return new CommandResult<Optional<Action<?>>>(Optional.empty(), "Target entity set to: " + bestScoreEntity);
 			}
-			return Optional.empty();
+			return new CommandResult<Optional<Action<?>>>(Optional.empty(), "Failed to find target entity");
 		}
 		public static FindTargetEntity create(JSONObject object) { return new FindTargetEntity(NumberProvider.create(object, "entity_weight")); }
 	}
@@ -123,20 +126,24 @@ public abstract class BehaviorCommand {
 			this.ifTrue = ifTrue;
 			this.ifFalse = ifFalse;
 		}
-		public Optional<Action<?>> execute(MonsterSituation situation) {
+		public CommandResult<Optional<Action<?>>> execute(MonsterSituation situation) {
+			CommandResult<Optional<Action<?>>> completeResult = new CommandResult<Optional<Action<?>>>(Optional.empty(), "If condition:");
 			ArrayList<BehaviorCommand> commands = new ArrayList<BehaviorCommand>();
 			// Evaluate condition
 			boolean conditionPassed = this.condition.get(situation);
 			if (conditionPassed) commands.addAll(this.ifTrue);
 			else commands.addAll(this.ifFalse);
+			completeResult.addSubResult("Condition evaluated to " + conditionPassed);
 			// Execute commands
 			for (BehaviorCommand command : commands) {
-				Optional<Action<?>> result = command.execute(new MonsterSituation(situation.level, situation.self, situation.self.target));
-				if (result.isPresent()) {
-					return result;
+				CommandResult<Optional<Action<?>>> result = command.execute(new MonsterSituation(situation.level, situation.self, situation.self.target));
+				completeResult.addSubResult(result.debugInfo);
+				if (result.result.isPresent()) {
+					completeResult.result = result.result;
+					return completeResult;
 				}
 			}
-			return Optional.empty();
+			return completeResult;
 		}
 		public static If create(JSONObject object) {
 			Condition condition = Condition.create(object.getObject("condition"));

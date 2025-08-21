@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.sillypantscoder.pixeldungeon4.actions.Action;
 import com.sillypantscoder.pixeldungeon4.entitydef.BehaviorCommand;
+import com.sillypantscoder.pixeldungeon4.entitydef.CommandResult;
 import com.sillypantscoder.pixeldungeon4.entitydef.MonsterSituation;
 import com.sillypantscoder.pixeldungeon4.level.Level;
 import com.sillypantscoder.pixeldungeon4.registries.MonsterType;
@@ -41,10 +42,12 @@ public class Monster extends LivingEntity {
 		// 	action.set(Optional.of(new Action.MoveAction(this, 1, path[1][0], path[1][1])));
 		// });
 		// Get action from behavior
+		System.out.println("Behavior for monster: " + this);
 		for (BehaviorCommand command : this.behavior) {
-			Optional<Action<?>> result = command.execute(new MonsterSituation(level, this, this.target));
-			if (result.isPresent()) {
-				return result;
+			CommandResult<Optional<Action<?>>> result = command.execute(new MonsterSituation(level, this, this.target));
+			System.out.println(result.debugInfo.replace("\n", "\n\t"));
+			if (result.result.isPresent()) {
+				return result.result;
 			}
 		}
 		throw new RuntimeException("Entity behavior didn't return an action! Entity: " + this.typeID);
