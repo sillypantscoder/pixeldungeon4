@@ -582,7 +582,9 @@ class Rendering {
 		}
 		if (game.me.target == null) game.me.target = { x, y }
 		// Post
-		Utils.post("/click", game.main.clientID + "\n" + x + "\n" + y);
+		Utils.post("/click", game.main.clientID + "\n" + x + "\n" + y).then(() => {
+			game.main.getMessagesFromServer()
+		});
 	}
 }
 
@@ -604,6 +606,8 @@ class Main {
 		this.clientID = clientID;
 		/** @type {string[][]} */
 		this.messageQueue = [];
+		/** @type {number | null} */
+		this.getMessageTimeoutID = null
 		// create game
 		this.game = new Game(this)
 	}
@@ -613,17 +617,20 @@ class Main {
 		await this.game.assets.importAssets(assets)
 	}
 	async getMessagesFromServer() {
+		if (this.getMessageTimeoutID != null) clearTimeout(this.getMessageTimeoutID)
+		this.getMessageTimeoutID = null
+		// Get Data
 		var messages = JSON.parse(await Utils.get("/get_messages/" + this.clientID));
 		// No message
 		if (messages.length == 0) {
-			setTimeout(this.getMessagesFromServer.bind(this), 2000);
+			this.getMessageTimeoutID = setTimeout(this.getMessagesFromServer.bind(this), 3000);
 			return;
 		}
 		// Handle message
 		for (var msg of messages) {
 			this.messageQueue.push(msg)
 		}
-		setTimeout(this.getMessagesFromServer.bind(this), 500);
+		this.getMessageTimeoutID = setTimeout(this.getMessagesFromServer.bind(this), 500);
 	}
 	async messageHandleLoop() {
 		while (true) {
