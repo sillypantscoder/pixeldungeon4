@@ -11,6 +11,7 @@ import com.sillypantscoder.pixeldungeon4.level.Level;
 import com.sillypantscoder.pixeldungeon4.registries.MonsterType;
 
 public class Monster extends LivingEntity {
+	public static boolean DEBUG_BEHAVIOR = false;
 	public String typeID;
 	public Optional<PathfindingTarget> target;
 	public ArrayList<BehaviorCommand> behavior;
@@ -32,20 +33,11 @@ public class Monster extends LivingEntity {
 		}).orElse(false)) {
 			this.target = Optional.empty();
 		}
-		// Pathfind
-		// this.target.ifPresent((v) -> {
-		// 	int[][] path = level.findPath(this.x, this.y, v.getX(), v.getY());
-		// 	if (path.length == 0) {
-		// 		this.target = Optional.empty();
-		// 		return;
-		// 	}
-		// 	action.set(Optional.of(new Action.MoveAction(this, 1, path[1][0], path[1][1])));
-		// });
 		// Get action from behavior
-		System.out.println("Behavior for monster: " + this);
+		if (DEBUG_BEHAVIOR) System.out.println("Behavior for monster: " + this);
 		for (BehaviorCommand command : this.behavior) {
 			CommandResult<Optional<Action<?>>> result = command.execute(new MonsterSituation(level, this, this.target));
-			System.out.println(result.debugInfo.replace("\n", "\n\t"));
+			if (DEBUG_BEHAVIOR) System.out.println(result.debugInfo.replace("\n", "\n\t"));
 			if (result.result.isPresent()) {
 				return result.result;
 			}

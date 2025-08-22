@@ -86,7 +86,12 @@ public abstract class NumberProvider {
 			this.min = min;
 			this.max = max;
 		}
-		public double get(MonsterSituation situation) { return Random.randfloat(this.min.get(situation), this.max.get(situation)); }
+		public double get(MonsterSituation situation) {
+			double min = this.min.get(situation);
+			double max = this.max.get(situation);
+			double generatedFloat = Random.randfloat(min, max);
+			return generatedFloat;
+		}
 		public static UniformFloat create(JSONObject object) { return new UniformFloat(NumberProvider.create(object, "min"), NumberProvider.create(object, "max")); }
 	}
 	public static class Triangular extends NumberProvider {

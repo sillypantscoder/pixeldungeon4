@@ -113,6 +113,7 @@ public class SubdivisionLevelGeneration {
 			for (int y = resultRects.get(i).top() * 2; y < resultRects.get(i).bottom() * 2; y++) level.tiles[resultRects.get(i).right() * 2][y].state = "wall";
 			// Add doors
 			addDoor(level, resultRects.get(i));
+			if (Math.random() < 0.5) addDoor(level, resultRects.get(i));
 		}
 		// Draw the border
 		for (int i = 0; i < level.tiles.length; i++) {

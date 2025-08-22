@@ -10,7 +10,7 @@ import com.sillypantscoder.pixeldungeon4.entities.TileEntity;
 import com.sillypantscoder.utils.JSONObject;
 
 public abstract class Condition {
-	public abstract boolean get(MonsterSituation situation);
+	public abstract CommandResult<Boolean> get(MonsterSituation situation);
 	public static Condition create(JSONObject object) {
 		String type = object.getString("type");
 		if (type.equals("and")) return And.create(object);
@@ -27,7 +27,10 @@ public abstract class Condition {
 			this.argument1 = argument1;
 			this.argument2 = argument2;
 		}
-		public boolean get(MonsterSituation situation) { return this.argument1.get(situation) && this.argument2.get(situation); }
+		public CommandResult<Boolean> get(MonsterSituation situation) {
+			CommandResult<Boolean> result = new CommandResult<Boolean>(false, "And");
+			return result.setResult(result.addSubResult("Argument 1", this.argument1.get(situation)) && result.addSubResult("Argument 2", this.argument2.get(situation)));
+		}
 		public static And create(JSONObject object) { return new And(Condition.create(object.getObject("argument1")), Condition.create(object.getObject("argument2"))); }
 	}
 	public static class Or extends Condition {
@@ -37,7 +40,10 @@ public abstract class Condition {
 			this.argument1 = argument1;
 			this.argument2 = argument2;
 		}
-		public boolean get(MonsterSituation situation) { return this.argument1.get(situation) || this.argument2.get(situation); }
+		public CommandResult<Boolean> get(MonsterSituation situation) {
+			CommandResult<Boolean> result = new CommandResult<Boolean>(false, "Or");
+			return result.setResult(result.addSubResult("Argument 1", this.argument1.get(situation)) || result.addSubResult("Argument 2", this.argument2.get(situation)));
+		}
 		public static Or create(JSONObject object) { return new Or(Condition.create(object.getObject("argument1")), Condition.create(object.getObject("argument2"))); }
 	}
 	public static class Not extends Condition {
@@ -45,7 +51,10 @@ public abstract class Condition {
 		public Not(Condition argument) {
 			this.argument = argument;
 		}
-		public boolean get(MonsterSituation situation) { return ! this.argument.get(situation); }
+		public CommandResult<Boolean> get(MonsterSituation situation) {
+			CommandResult<Boolean> result = new CommandResult<Boolean>(false, "Not");
+			return result.setResult(! result.addSubResult("Argument", this.argument.get(situation)));
+		}
 		public static Not create(JSONObject object) { return new Not(Condition.create(object.getObject("argument"))); }
 	}
 	public static class Comparison extends Condition {
@@ -54,10 +63,13 @@ public abstract class Condition {
 		public NumberProvider argument2;
 		public Comparison(CompareType type, NumberProvider argument1, NumberProvider argument2) {
 			this.type = type;
-			this.argument1 = argument2;
+			this.argument1 = argument1;
 			this.argument2 = argument2;
 		}
-		public boolean get(MonsterSituation situation) { return this.type.apply(this.argument1.get(situation), this.argument2.get(situation)); }
+		public CommandResult<Boolean> get(MonsterSituation situation) {
+			CommandResult<Boolean> result = new CommandResult<Boolean>(false, this.type.name().charAt(0) + this.type.name().substring(1).toLowerCase().replace("_", " "));
+			return result.setResult(this.type.apply(result.addSubResult("Argument 1", this.argument1.get(situation)), result.addSubResult("Argument 2", this.argument2.get(situation))));
+		}
 		public static Comparison create(JSONObject object) { return new Comparison(CompareType.valueOf(object.getString("type").toUpperCase().replace("-", "_")), NumberProvider.create(object, "argument1"), NumberProvider.create(object, "argument2")); }
 		public static enum CompareType {
 			LESS_THAN((a, b) -> a < b), GREATER_THAN((a, b) -> a > b), LESS_THAN_EQUAL_TO((a, b) -> a <= b), GREATER_THAN_EQUAL_TO((a, b) -> a >= b), EQUAL_TO((a, b) -> a == b);
@@ -73,7 +85,10 @@ public abstract class Condition {
 		public HasTarget(CompareType minimumTargetType) {
 			this.minimumTargetType = minimumTargetType;
 		}
-		public boolean get(MonsterSituation situation) { return this.minimumTargetType.includes(situation.self, situation.target); }
+		public CommandResult<Boolean> get(MonsterSituation situation) {
+			CommandResult<Boolean> result = new CommandResult<Boolean>(false, "Has Target (type: " + this.minimumTargetType.name().toLowerCase() + ")");
+			return result.setResult(this.minimumTargetType.includes(situation.self, situation.target));
+		}
 		public static HasTarget create(JSONObject object) { return new HasTarget(CompareType.valueOf(object.getString("minimum_target_type").toUpperCase())); }
 		public static enum CompareType {
 			ANY((m, v) -> v.isPresent()), ENTITY((m, v) -> v.map((t) -> t instanceof TileEntity).orElse(false)), LIVING_ENTITY((m, v) -> v.map((t) -> t instanceof LivingEntity).orElse(false)),

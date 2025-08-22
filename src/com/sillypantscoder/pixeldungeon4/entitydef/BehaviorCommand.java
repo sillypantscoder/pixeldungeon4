@@ -130,14 +130,14 @@ public abstract class BehaviorCommand {
 			CommandResult<Optional<Action<?>>> completeResult = new CommandResult<Optional<Action<?>>>(Optional.empty(), "If condition:");
 			ArrayList<BehaviorCommand> commands = new ArrayList<BehaviorCommand>();
 			// Evaluate condition
-			boolean conditionPassed = this.condition.get(situation);
+			boolean conditionPassed = completeResult.addSubResult("Condition", this.condition.get(situation));
 			if (conditionPassed) commands.addAll(this.ifTrue);
 			else commands.addAll(this.ifFalse);
-			completeResult.addSubResult("Condition evaluated to " + conditionPassed);
 			// Execute commands
-			for (BehaviorCommand command : commands) {
-				CommandResult<Optional<Action<?>>> result = command.execute(new MonsterSituation(situation.level, situation.self, situation.self.target));
-				completeResult.addSubResult(result.debugInfo);
+			completeResult.addSubResult("Evaluating " + commands.size() + " command" + (commands.size() == 1 ? "" : "s") + " from is" + (conditionPassed ? "True" : "False"));
+			for (int i = 0; i < commands.size(); i++) {
+				CommandResult<Optional<Action<?>>> result = commands.get(i).execute(new MonsterSituation(situation.level, situation.self, situation.self.target));
+				completeResult.addSubResult("Command " + (i + 1), result.debugInfo);
 				if (result.result.isPresent()) {
 					completeResult.result = result.result;
 					return completeResult;
