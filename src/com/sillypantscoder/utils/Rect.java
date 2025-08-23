@@ -17,20 +17,8 @@ public class Rect {
 				top() <= y && y <= bottom();
 	}
 	public boolean collideRect(Rect other) {
-		boolean xOverlap =
-			this.intervalContains(this.left(), this.right(), other.left()) ||	// \ ____ Check whether the left or right of the other
-			this.intervalContains(this.left(), this.right(), other.right()) ||	// /		rect is inside of this rect
-			this.intervalContains(other.left(), other.right(), this.left()) ||	// \ ____ Check whether the left or right of this rect
-			this.intervalContains(other.left(), other.right(), this.right());	// /		is inside the other rect
-		boolean yOverlap =
-			this.intervalContains(this.top(), this.bottom(), other.top()) ||
-			this.intervalContains(this.top(), this.bottom(), other.bottom()) ||
-			this.intervalContains(other.top(), other.bottom(), this.top()) ||
-			this.intervalContains(other.top(), other.bottom(), this.bottom());
-		return xOverlap && yOverlap;
-	}
-	protected boolean intervalContains(int start, int end, int point) {
-		return start <= point && point <= end;
+		return this.left() < other.right() && other.left() < this.right() &&
+				this.top() < other.bottom() && other.top() < this.bottom();
 	}
 	public boolean containsRect(Rect other) {
 		return this.left() < other.left() && other.right() < this.right() &&

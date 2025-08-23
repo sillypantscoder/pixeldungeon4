@@ -10,7 +10,7 @@ import com.sillypantscoder.pixeldungeon4.entities.Monster;
 import com.sillypantscoder.pixeldungeon4.entities.Player;
 import com.sillypantscoder.pixeldungeon4.entities.TileEntity;
 import com.sillypantscoder.pixeldungeon4.level.Level;
-import com.sillypantscoder.pixeldungeonlevelgen.SubdivisionLevelGeneration;
+import com.sillypantscoder.pixeldungeonlevelgen.RoomBuildingLevelGeneration;
 import com.sillypantscoder.utils.Random;
 import com.sillypantscoder.utils.Utils;
 
@@ -18,7 +18,7 @@ public class Game {
 	public Level level;
 	public HashMap<String, ArrayList<String[]>> messages;
 	public Game() {
-		this.level = SubdivisionLevelGeneration.generateLevel(60);
+		this.level = RoomBuildingLevelGeneration.generateLevel(60);
 		this.messages = new HashMap<String, ArrayList<String[]>>();
 		// spawn a rat
 		this.addFreshEntity(this.createMonsterEntity("rat"));
@@ -33,8 +33,8 @@ public class Game {
 			// Send level size
 			messages.get(playerID).add(new String[] {
 				"level_size",
-				String.valueOf(level.tiles.length),
-				String.valueOf(level.tiles[0].length)
+				String.valueOf(level.tiles[0].length),
+				String.valueOf(level.tiles.length)
 			});
 		}
 		// Create player entity
