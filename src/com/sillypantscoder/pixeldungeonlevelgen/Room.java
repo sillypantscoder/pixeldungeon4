@@ -1,19 +1,15 @@
 package com.sillypantscoder.pixeldungeonlevelgen;
 
 import java.util.ArrayList;
-import java.util.Optional;
 
-import com.sillypantscoder.pixeldungeon4.level.Level;
 import com.sillypantscoder.utils.Random;
 import com.sillypantscoder.utils.Rect;
 
-public class Room {
+public class Room extends AbstractRoom {
 	public Rect rect;
-	public ArrayList<Door> doors;
-	public RoomType type;
-	public Room(Rect rect, RoomType type) {
+	public Room(Rect rect) {
+		super();
 		this.rect = rect;
-		this.doors = new ArrayList<Door>();
 	}
 	public static Room generateOnDoor(Door d, int width, int height) {
 		Direction direction = d.freeDirection.orElseThrow();
@@ -35,33 +31,7 @@ public class Room {
 			throw new IllegalArgumentException("Invalid direction");
 		}
 		// Create room
-		return new Room(rect, RoomType.NORMAL);
-	}
-	public boolean equals(Object other) {
-		if (other instanceof Room otherRoom) {
-			return this.rect.equals(otherRoom.rect);
-		}
-		return false;
-	}
-	public boolean hasAnyDoor(int x, int y) {
-		return this.hasFreeDoor(x, y) || this.hasClosedDoor(x, y);
-	}
-	public boolean hasAnyDoorNearby(int x, int y) {
-		return this.hasAnyDoor(x, y) ||
-				this.hasAnyDoor(x+1, y) ||
-				this.hasAnyDoor(x-1, y) ||
-				this.hasAnyDoor(x, y+1) ||
-				this.hasAnyDoor(x, y-1);
-	}
-	public boolean hasFreeDoor(int x, int y) {
-		return this.doors.stream().anyMatch((p) -> p.freeDirection.isPresent() && p.x == x && p.y == y);
-	}
-	public boolean hasClosedDoor(int x, int y) {
-		return this.doors.stream().anyMatch((p) -> p.freeDirection.isEmpty() && p.x == x && p.y == y);
-	}
-	public void addDoor(int[] position, Direction direction) {
-		if (this.hasAnyDoor(position[0], position[1])) return;
-		this.doors.add(new Door(position[0], position[1], direction));
+		return new Room(rect);
 	}
 	public void addDoor() {
 		// Add a door at a random position on the border
@@ -87,29 +57,24 @@ public class Room {
 			this.addDoor();
 		}
 	}
-	public void closeDoor(int x, int y) {
-		for (int i = 0; i < this.doors.size(); i++) {
-			Door door = this.doors.get(i);
-			if (door.x == x && door.y == y) {
-				door.freeDirection = Optional.empty();
+	public void move(int dx, int dy) {
+		super.move(dx, dy);
+		this.rect.x += dx;
+		this.rect.y += dy;
+	}
+	public int[][] getCoveredPositions() {
+		ArrayList<int[]> positions = new ArrayList<int[]>();
+		for (int x = this.rect.left() + 1; x < this.rect.right(); x++) { // " + 1" and "<" are because we don't want to include
+			for (int y = this.rect.top() + 1; y < this.rect.bottom(); y++) { // wall positions in the resulting array
+				positions.add(new int[] { x, y });
 			}
 		}
-	}
-	public void draw(Level level) {
-		for (int x = this.rect.left(); x <= this.rect.right(); x++) {
-			for (int y = this.rect.top(); y <= this.rect.bottom(); y++) {
-				// Draw doors
-				if (this.hasClosedDoor(x, y)) level.tiles[x][y].state = "door_closed";
-				// Don't overwrite other rooms
-				else if (! level.tiles[x][y].state.equals("none")) continue;
-				// Draw walls
-				else if (x == this.rect.left() || x == this.rect.right() || y == this.rect.top() || y == this.rect.bottom()) level.tiles[x][y].state = "wall";
-				// Draw floor
-				else level.tiles[x][y].state = "normal";
-			}
+		int[][] out = new int[positions.size()][2];
+		for (int i = 0; i < positions.size(); i++) {
+			out[i][0] = positions.get(i)[0];
+			out[i][1] = positions.get(i)[1];
 		}
+		return out;
 	}
-	public static enum RoomType {
-		NORMAL, START, END
-	}
+	public boolean isValid(boolean strict) { return true; }
 }

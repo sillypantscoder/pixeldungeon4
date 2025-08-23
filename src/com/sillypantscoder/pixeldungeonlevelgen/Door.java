@@ -7,6 +7,7 @@ public class Door {
 	public int y;
 	public Optional<Direction> freeDirection;
 	public int attempts = 10;
+	public boolean canConnectToCorridor = true;
 	public Door(int x, int y, Direction freeDirection) {
 		this.x = x;
 		this.y = y;

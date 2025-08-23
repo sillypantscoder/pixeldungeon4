@@ -15,7 +15,7 @@ import com.sillypantscoder.utils.Rect;
  */
 public class RoomBuildingLevelGeneration {
 	public static void main(String[] args) {
-		Tile[][] level = generateLevel(110).tiles;
+		Tile[][] level = generateLevel(60).tiles;
 		// Print level as ASCII art
 		for (int y = 0; y < level[0].length; y++) {
 			for (int x = 0; x < level.length; x++) {
@@ -48,14 +48,17 @@ public class RoomBuildingLevelGeneration {
 			return amount;
 		};
 		// Start with a single starting room and a few doors
-		ArrayList<Room> rooms = new ArrayList<Room>();
-		rooms.add(new Room(new Rect(0, 0, (int)(Random.triangular(3, 7.5, 9)), (int)(Random.triangular(3, 7.5, 9))), Room.RoomType.START));
-		rooms.get(0).addDoors(getNumberOfDoors.get());
+		ArrayList<AbstractRoom> rooms = new ArrayList<AbstractRoom>();
+		{
+			Room startRoom = new Room(new Rect(0, 0, (int)(Random.triangular(3, 8, 9)), (int)(Random.triangular(3, 8, 9))));
+			rooms.add(startRoom);
+			startRoom.addDoors(getNumberOfDoors.get());
+		}
 		// Generation Loop
 		while (true) {
 			// Choose a random free door
 			ArrayList<Door> freeDoors = new ArrayList<Door>();
-			for (Room r : rooms) {
+			for (AbstractRoom r : rooms) {
 				for (Door door : r.doors) {
 					if (door.freeDirection.isPresent()) freeDoors.add(door);
 				}
@@ -63,18 +66,26 @@ public class RoomBuildingLevelGeneration {
 			if (freeDoors.size() == 0) break;
 			Door selectedDoor = Random.choice(freeDoors);
 			// Generate a room here
-			Room r = Room.generateOnDoor(selectedDoor, (int)(Random.triangular(3, 7.5, 9)), (int)(Random.triangular(3, 7.5, 9)));
+			AbstractRoom r = AbstractRoom.generateOnDoor(selectedDoor);
+			// Add the selected door to the new room as closed
+			Door copyDoor = new Door(selectedDoor.x, selectedDoor.y, null);
+			r.doors.add(copyDoor);
 			// Ensure this room does not intersect any other rooms
 			boolean validRoom = true;
-			for (Room r2 : rooms) {
-				if (r.rect.collideRect(r2.rect)) validRoom = false;
+			for (AbstractRoom r2 : rooms) {
+				if (r.intersectsWith(r2)) validRoom = false;
 			}
+			if (! r.isValid(false)) validRoom = false;
 			if (! validRoom) {
 				selectedDoor.attempts -= 1;
 				if (selectedDoor.attempts <= 0) {
 					// Remove this door
-					for (Room sourceRoom : rooms) {
-						sourceRoom.doors.remove(selectedDoor);
+					for (AbstractRoom sourceRoom : rooms) {
+						for (Door d : new ArrayList<Door>(sourceRoom.doors)) {
+							if (d.x == selectedDoor.x && d.y == selectedDoor.y) {
+								sourceRoom.doors.remove(d);
+							}
+						}
 					}
 					doorsLeft.set(doorsLeft.get() + 0.5d);
 				}
@@ -83,40 +94,62 @@ public class RoomBuildingLevelGeneration {
 			// Save room and close attached door
 			rooms.add(r);
 			selectedDoor.freeDirection = Optional.empty();
-			// Add the selected door to the new room as closed
-			Door copyDoor = new Door(selectedDoor.x, selectedDoor.y, null);
-			r.doors.add(copyDoor);
 			// Add some doors to the new room
-			r.addDoors(getNumberOfDoors.get());
+			if (r instanceof Room _r) _r.addDoors(getNumberOfDoors.get());
+		}
+		// Remove rooms that became invalid
+		for (AbstractRoom r : new ArrayList<AbstractRoom>(rooms)) {
+			if (! r.isValid(true)) {
+				// Remove all doors
+				for (Door removeDoor : r.doors) {
+					for (AbstractRoom checkRoom : rooms) {
+						if (checkRoom == r) continue;
+						for (Door d : new ArrayList<Door>(checkRoom.doors)) {
+							if (d.x == removeDoor.x && d.y == removeDoor.y) {
+								checkRoom.doors.remove(d);
+							}
+						}
+					}
+				}
+				// Remove this room
+				rooms.remove(r);
+			}
 		}
 		// Move rooms so no coordinates are negative
 		{
 			int minX = 0;
 			int minY = 0;
-			for (Room r : rooms) {
-				if (r.rect.x < minX) minX = r.rect.x;
-				if (r.rect.y < minY) minY = r.rect.y;
-			}
-			for (Room r : rooms) {
-				r.rect.x -= minX;
-				r.rect.y -= minY;
-				for (Door d : r.doors) {
-					d.x -= minX;
-					d.y -= minY;
+			for (AbstractRoom r : rooms) {
+				int[][] positions = r.getCoveredPositions();
+				for (int[] pos : positions) {
+					if (pos[0] - 1 < minX) minX = pos[0] - 1;
+					if (pos[1] - 1 < minY) minY = pos[1] - 1;
 				}
+			}
+			for (AbstractRoom r : rooms) {
+				r.move(-minX, -minY);
 			}
 		}
 		// Initialize level
 		int maxX = 0;
 		int maxY = 0;
-		for (Room r : rooms) {
-			if (r.rect.x + r.rect.w > maxX) maxX = r.rect.x + r.rect.w;
-			if (r.rect.y + r.rect.h > maxY) maxY = r.rect.y + r.rect.h;
+		for (AbstractRoom r : rooms) {
+			int[][] positions = r.getCoveredPositions();
+			for (int[] pos : positions) {
+				if (pos[0] + 1 > maxX) maxX = pos[0] + 1;
+				if (pos[1] + 1 > maxY) maxY = pos[1] + 1;
+			}
 		}
 		Level level = new Level(maxX + 1, maxY + 1);
 		// Draw the rooms
-		for (Room r : rooms) {
-			r.draw(level);
+		for (AbstractRoom r : rooms) {
+			r.drawWalls(level);
+		}
+		for (AbstractRoom r : rooms) {
+			r.drawGround(level);
+		}
+		for (AbstractRoom r : rooms) {
+			r.drawDoors(level);
 		}
 		// // Draw the border
 		// for (int i = 0; i < level.tiles.length; i++) {
