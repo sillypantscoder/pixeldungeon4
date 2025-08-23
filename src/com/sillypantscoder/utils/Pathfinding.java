@@ -49,8 +49,8 @@ public class Pathfinding {
 				}
 			}
 			for (int i = 0; i < newPos.size(); i++) {
-				allWalkers.add(newPos.get(i));
 				if (newPos.get(i).x == endPos[0] && newPos.get(i).y == endPos[1]) finishers.add(newPos.get(i));
+				else allWalkers.add(newPos.get(i));
 			}
 			// Finish
 			if (allWalkers.size() == 0) finished = true;

@@ -43,6 +43,10 @@ public class Rect {
 		int y = this.y + ((this.h - size) / 2);
 		return new Rect(x, y, size, size);
 	}
+	public boolean isPointOnBorder(int x, int y) {
+		return (x == left() || x == right()) && (top() <= y && y <= bottom()) ||
+				(y == top() || y == bottom()) && (left() <= x && x <= right());
+	}
 	public Rect translate(int bx, int by, int bw, int bh) {
 		return new Rect(x + bx, y + by, w + bw, h + bh);
 	}
