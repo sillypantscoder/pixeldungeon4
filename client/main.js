@@ -670,6 +670,8 @@ class Rendering {
 		// Post
 		Utils.post("/click", game.main.clientID + "\n" + x + "\n" + y).then(() => {
 			game.main.getMessagesFromServer()
+		}, () => {
+			game.me.target = null
 		});
 	}
 }
@@ -716,11 +718,11 @@ class Main {
 		for (var msg of messages) {
 			this.messageQueue.push(msg)
 		}
-		this.getMessageTimeoutID = setTimeout(this.getMessagesFromServer.bind(this), 500);
+		this.getMessageTimeoutID = setTimeout(this.getMessagesFromServer.bind(this), 100);
 	}
 	async messageHandleLoop() {
 		while (true) {
-			while (this.messageQueue.length == 0) await new Promise((resolve) => setTimeout(resolve, 100));
+			while (this.messageQueue.length == 0) await new Promise((resolve) => requestAnimationFrame(resolve));
 			await this.handleMessage(this.messageQueue[0])
 			this.messageQueue.shift()
 		}

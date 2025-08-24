@@ -68,35 +68,43 @@ public class Level {
 			// System.out.print(targetEntity.toString() + " - time: " + targetEntity.time);
 			Optional<Action<?>> action = targetEntity.getAction(game.level);
 			action.ifPresent((a) -> a.execute(game));
-			// System.out.println(action.map((v) -> " - new time: " + targetEntity.time).orElse(" - no action"));
+			// System.out.println(action.map((v) -> " - action: " + v.toString() + " - new time: " + targetEntity.time).orElse(" - no action"));
 			return action.isPresent();
 		} else return false;
 	}
+	public ArrayList<Player> allPlayers() {
+		ArrayList<Player> players = new ArrayList<Player>();
+		for (Entity checkEntity : this.entities) {
+			if (checkEntity instanceof Player player) {
+				players.add(player);
+			}
+		}
+		return players;
+	}
 	public void checkForDeath(LivingEntity e) {
 		if (e.health <= 0) {
-			this.entities.remove(e);
-			for (Entity checkEntity : this.entities) {
-				if (checkEntity instanceof Player player) {
-					if (player == e || this.isLocVisible(player.x, player.y, e.x, e.y)) {
-						// Send death
-						player.sendMessage.accept(new String[] {
-							"entity_death",
-							String.valueOf(e.id)
-						});
-					}
+			// Send entity death to clients
+			for (Player player : allPlayers()) {
+				if (player == e || this.isLocVisible(player.x, player.y, e.x, e.y)) {
+					// Send death
+					player.sendMessage.accept(new String[] {
+						"entity_death",
+						String.valueOf(e.id)
+					});
 				}
 			}
+			// Register entity death
+			// this has to be afterwards so a player's death is sent to that player
+			this.entities.remove(e);
 		} else {
-			for (Entity checkEntity : this.entities) {
-				if (checkEntity instanceof Player player) {
-					if (player == e || this.isLocVisible(player.x, player.y, e.x, e.y)) {
-						// Set new target health
-						player.sendMessage.accept(new String[] {
-							"set_health",
-							String.valueOf(e.id),
-							String.valueOf(e.health)
-						});
-					}
+			for (Player player : allPlayers()) {
+				if (player == e || this.isLocVisible(player.x, player.y, e.x, e.y)) {
+					// Set new target health
+					player.sendMessage.accept(new String[] {
+						"set_health",
+						String.valueOf(e.id),
+						String.valueOf(e.health)
+					});
 				}
 			}
 		}

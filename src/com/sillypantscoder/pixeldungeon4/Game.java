@@ -56,8 +56,12 @@ public class Game {
 	public void clearMessages(String playerID) {
 		ArrayList<String[]> messageList = new ArrayList<String[]>();
 		this.messages.put(playerID, messageList);
-		Player p = this.getPlayerByID(playerID);
-		p.sendMessage = messageList::add;
+		try {
+			Player p = this.getPlayerByID(playerID);
+			p.sendMessage = messageList::add;
+		} catch (RuntimeException e) {
+			// Player has died :(
+		}
 	}
 	public Map<String, byte[]> getAllData() {
 		HashMap<String, byte[]> data = new HashMap<String, byte[]>();

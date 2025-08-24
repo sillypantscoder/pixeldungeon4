@@ -11,6 +11,7 @@ public interface PathfindingTarget {
 		public int getY() { return y; }
 	}
 	public default PathfindingTarget update(Level level, int sourceX, int sourceY) {
+		if (this instanceof LivingEntity targetEntity && !level.entities.contains(targetEntity)) return null;
 		boolean canSee = level.isLocVisible(this.getX(), this.getY(), sourceX, sourceY);
 		if (canSee) return this;
 		else return new StaticPosition(this);

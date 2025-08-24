@@ -26,9 +26,8 @@ public class MoveAction extends Action<TileEntity> {
 		// Update time
 		this.entity.time += this.time;
 		// Inform clients about this update
-		for (String playerID : game.messages.keySet()) {
-			Player player = game.getPlayerByID(playerID);
-			if (game.level.isLocVisible(player.x, player.y, previousX, previousY) || game.level.isLocVisible(player.x, player.y, this.targetX, this.targetY) || player == this.entity) {
+		for (Player player : game.level.allPlayers()) {
+			if (player == this.entity || game.level.isLocVisible(player.x, player.y, previousX, previousY) || game.level.isLocVisible(player.x, player.y, this.targetX, this.targetY)) {
 				// Create entity if it does not exist
 				if (! player.visibleEntities.contains(this.entity)) {
 					player.visibleEntities.add(this.entity);
@@ -36,17 +35,17 @@ public class MoveAction extends Action<TileEntity> {
 						"create_entity",
 						this.entity.serialize().toString()
 					};
-					game.messages.get(playerID).add(data);
+					player.sendMessage.accept(data);
 				}
 				// Move entity
-				game.messages.get(playerID).add(new String[] {
+				player.sendMessage.accept(new String[] {
 					"move_entity",
 					String.valueOf(this.entity.id),
 					String.valueOf(this.entity.x),
 					String.valueOf(this.entity.y)
 				});
 				// Set animation
-				game.messages.get(playerID).add(new String[] {
+				player.sendMessage.accept(new String[] {
 					"set_animation",
 					String.valueOf(this.entity.id),
 					"move"

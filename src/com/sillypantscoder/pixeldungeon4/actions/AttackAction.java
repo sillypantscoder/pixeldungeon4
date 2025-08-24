@@ -20,17 +20,16 @@ public class AttackAction extends Action<LivingEntity> {
 		// Update time
 		this.entity.time += this.time;
 		// Inform clients about this update
-		for (String playerID : game.messages.keySet()) {
-			Player player = game.getPlayerByID(playerID);
+		for (Player player : game.level.allPlayers()) {
 			if (player == this.entity || game.level.isLocVisible(player.x, player.y, this.entity.x, this.entity.y)) {
 				// Set animation
-				game.messages.get(playerID).add(new String[] {
+				player.sendMessage.accept(new String[] {
 					"set_animation",
 					String.valueOf(this.entity.id),
 					"action"
 				});
 				// Create attacking particles
-				game.messages.get(playerID).add(new String[] {
+				player.sendMessage.accept(new String[] {
 					"create_particle",
 					"attack",
 					String.valueOf(this.entity.id),
