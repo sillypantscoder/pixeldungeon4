@@ -90,7 +90,7 @@ public abstract class Condition {
 			CommandResult<Boolean> result = new CommandResult<Boolean>(false, "Has Target (type: " + this.minimumTargetType.name().toLowerCase() + ")");
 			return result.setResult(this.minimumTargetType.includes(situation.self, situation.target));
 		}
-		public static HasTarget create(JSONObject object) { return new HasTarget(CompareType.valueOf(object.getString("minimum_target_type").toUpperCase())); }
+		public static HasTarget create(JSONObject object) { return new HasTarget(CompareType.valueOf(object.getString("minimum_target_type").toUpperCase().replace("-", "_"))); }
 		public static enum CompareType {
 			ANY((m, v) -> v.isPresent()), ENTITY((m, v) -> v.map((t) -> t instanceof TileEntity).orElse(false)), LIVING_ENTITY((m, v) -> v.map((t) -> t instanceof LivingEntity).orElse(false)),
 				ATTACKABLE((m, v) -> v.map((t) -> {

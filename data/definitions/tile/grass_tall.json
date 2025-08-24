@@ -1,0 +1,10 @@
+{
+	"$schema": "../../../schemas/tile_definition.json",
+	"collisionType": "normal",
+	"canSeeThrough": false,
+	"onEnter": {
+		"type": "change_tile",
+		"tile": "grass_short"
+	},
+	"onLeave": "none"
+}

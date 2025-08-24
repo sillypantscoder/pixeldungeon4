@@ -12,7 +12,7 @@
 				"type": "not",
 				"argument": {
 					"type": "has-target",
-					"minimum_target_type": "any"
+					"minimum_target_type": "living-entity"
 				}
 			},
 			"ifTrue": [

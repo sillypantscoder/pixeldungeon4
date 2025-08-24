@@ -1,6 +1,7 @@
 package com.sillypantscoder.pixeldungeonlevelgen;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -33,6 +34,36 @@ public class RoomBuildingLevelGeneration {
 		public Pair(A a, B b) {
 			this.a = a;
 			this.b = b;
+		}
+	}
+	public static void createPatchOval(Level l, String[] replaceables, String[] rare_replaceables, String tile, double cx, double cy, double w, double h) {
+		for (int x = 0; x < l.tiles.length; x++) {
+			for (int y = 0; y < l.tiles.length; y++) {
+				if (x < 0 || y < 0 || x >= l.tiles.length || y >= l.tiles[0].length) continue;
+				if (! (
+					Arrays.asList(replaceables).contains(l.tiles[x][y].state) ||
+					(Arrays.asList(rare_replaceables).contains(l.tiles[x][y].state) && Math.random() < 0.1)
+				)) continue;
+				double xDiff = Math.pow(x - cx, 2) / (w * w);
+				double yDiff = Math.pow(y - cy, 2) / (h * h);
+				if (xDiff + yDiff < 1) {
+					l.tiles[x][y].state = tile;
+				}
+			}
+		}
+	}
+	public static void createGrassPatch(Level l, int x, int y) {
+		int patches = Random.randint(1, 4);
+		int shortPatches = Random.randint(0, patches);
+		for (int i = 0; i < patches; i++) {
+			String fillTile = "grass_tall";
+			if (i < shortPatches) fillTile = "grass_short";
+			createPatchOval(l, new String[] { "normal" }, new String[] { "door_closed" }, fillTile,
+				Random.randfloat(x - 1.5, x + 1.5),
+				Random.randfloat(x - 1.5, x + 1.5),
+				Random.randfloat(1.5, 3),
+				Random.randfloat(1.5, 3)
+			);
 		}
 	}
 	public static Level generateLevel(int worldSize) {
@@ -151,13 +182,14 @@ public class RoomBuildingLevelGeneration {
 		for (AbstractRoom r : rooms) {
 			r.drawDoors(level);
 		}
-		// // Draw the border
-		// for (int i = 0; i < level.tiles.length; i++) {
-		// 	level.tiles[i][0].state = "wall";
-		// 	level.tiles[i][level.tiles[i].length - 1].state = "wall";
-		// 	level.tiles[0][i].state = "wall";
-		// 	level.tiles[level.tiles.length - 1][i].state = "wall";
-		// }
+		// Decorations
+		for (AbstractRoom r : rooms) {
+			for (int[] pos : r.getCoveredPositions()) {
+				if (Math.random() < 0.02) {
+					createGrassPatch(level, pos[0], pos[1]);
+				}
+			}
+		}
 		// Finish
 		return level;
 	}
