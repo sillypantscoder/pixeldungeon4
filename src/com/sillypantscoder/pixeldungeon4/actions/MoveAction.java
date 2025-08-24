@@ -26,7 +26,7 @@ public class MoveAction extends Action<TileEntity> {
 		// Update time
 		this.entity.time += this.time;
 		// Inform clients about this update
-		for (Player player : game.level.allPlayers()) {
+		for (Player player : game.allPlayers()) {
 			if (player == this.entity || game.level.isLocVisible(player.x, player.y, previousX, previousY) || game.level.isLocVisible(player.x, player.y, this.targetX, this.targetY)) {
 				// Create entity if it does not exist
 				if (! player.visibleEntities.contains(this.entity)) {

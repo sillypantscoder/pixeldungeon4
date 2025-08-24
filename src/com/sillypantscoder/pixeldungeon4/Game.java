@@ -1,11 +1,12 @@
 package com.sillypantscoder.pixeldungeon4;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.sillypantscoder.pixeldungeon4.entities.Entity;
+import com.sillypantscoder.pixeldungeon4.entities.LivingEntity;
 import com.sillypantscoder.pixeldungeon4.entities.Monster;
 import com.sillypantscoder.pixeldungeon4.entities.Player;
 import com.sillypantscoder.pixeldungeon4.entities.TileEntity;
@@ -16,10 +17,10 @@ import com.sillypantscoder.utils.Utils;
 
 public class Game {
 	public Level level;
-	public HashMap<String, ArrayList<String[]>> messages;
+	public HashMap<String, PlayerData> players;
 	public Game() {
 		this.level = RoomBuildingLevelGeneration.generateLevel(45);
-		this.messages = new HashMap<String, ArrayList<String[]>>();
+		this.players = new HashMap<String, PlayerData>();
 		// spawn some rats
 		this.addFreshEntity(this.createMonsterEntity("rat"));
 		this.addFreshEntity(this.createMonsterEntity("rat"));
@@ -29,39 +30,33 @@ public class Game {
 	public String loginPlayer() {
 		// Get player ID
 		String playerID = "P" + Random.randomInt();
+		// Create player entity
+		Player playerEntity = this.createPlayerEntity(playerID);
+		this.addFreshEntity(playerEntity);
 		// Messages
-		messages.put(playerID, new ArrayList<String[]>());
+		players.put(playerID, new PlayerData(playerEntity));
 		{
 			// Send level size
-			messages.get(playerID).add(new String[] {
+			players.get(playerID).sendMessage(new String[] {
 				"level_size",
 				String.valueOf(level.tiles[0].length),
 				String.valueOf(level.tiles.length)
 			});
 		}
-		// Create player entity
-		Player playerEntity = this.createPlayerEntity(playerID);
-		playerEntity.sendVision(level);
-		this.addFreshEntity(playerEntity);
 		{
+			// Vision
+			playerEntity.sendVision(level);
+		}
+		{
+			// Set me
 			String[] data = new String[] {
 				"set_me",
 				String.valueOf(playerEntity.id)
 			};
-			messages.get(playerID).add(data);
+			players.get(playerID).sendMessage(data);
 		}
 		// Save player ID
 		return playerID;
-	}
-	public void clearMessages(String playerID) {
-		ArrayList<String[]> messageList = new ArrayList<String[]>();
-		this.messages.put(playerID, messageList);
-		try {
-			Player p = this.getPlayerByID(playerID);
-			p.sendMessage = messageList::add;
-		} catch (RuntimeException e) {
-			// Player has died :(
-		}
 	}
 	public Map<String, byte[]> getAllData() {
 		HashMap<String, byte[]> data = new HashMap<String, byte[]>();
@@ -90,7 +85,7 @@ public class Game {
 	}
 	public Player createPlayerEntity(String playerID) {
 		int[] spawnPoint = this.level.getSpawnPoint();
-		return new Player(playerID, this.level.getNewEntityTime(), spawnPoint[0], spawnPoint[1], messages.get(playerID)::add);
+		return new Player(playerID, this.level.getNewEntityTime(), spawnPoint[0], spawnPoint[1], null);
 	}
 	public Monster createMonsterEntity(String monsterID) {
 		int[] spawnPoint = this.level.getSpawnPoint();
@@ -100,7 +95,7 @@ public class Game {
 		// *Not related to Minecraft
 		this.level.entities.add(e);
 		if (e instanceof TileEntity tileEntity) {
-			for (String playerID : this.messages.keySet()) {
+			for (String playerID : this.players.keySet()) {
 				// Check if player can see it
 				Player p = this.getPlayerByID(playerID);
 				if (! this.level.isLocVisible(p.x, p.y, tileEntity.x, tileEntity.y)) continue;
@@ -109,7 +104,7 @@ public class Game {
 					"create_entity",
 					tileEntity.serialize().toString()
 				};
-				messages.get(playerID).add(data);
+				players.get(playerID).sendMessage(data);
 			}
 		}
 	}
@@ -117,6 +112,37 @@ public class Game {
 		for (int i = 0; i < 16; i++) {
 			boolean canContinue = this.level.doEntityTurn(this);
 			if (! canContinue) break;
+		}
+	}
+	public List<Player> allPlayers() {
+		return this.players.values().stream().map((v) -> v.player()).toList();
+	}
+	public void checkForDeath(LivingEntity e) {
+		if (e.health <= 0) {
+			// Send entity death to clients
+			for (Player player : allPlayers()) {
+				if (player == e || level.isLocVisible(player.x, player.y, e.x, e.y)) {
+					// Send death
+					player.sendMessage.accept(new String[] {
+						"entity_death",
+						String.valueOf(e.id)
+					});
+				}
+			}
+			// Register entity death
+			// this has to be afterwards so a player's death is sent to that player
+			level.entities.remove(e);
+		} else {
+			for (Player player : allPlayers()) {
+				if (player == e || level.isLocVisible(player.x, player.y, e.x, e.y)) {
+					// Set new target health
+					player.sendMessage.accept(new String[] {
+						"set_health",
+						String.valueOf(e.id),
+						String.valueOf(e.health)
+					});
+				}
+			}
 		}
 	}
 }

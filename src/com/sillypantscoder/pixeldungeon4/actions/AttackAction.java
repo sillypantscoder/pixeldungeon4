@@ -20,7 +20,7 @@ public class AttackAction extends Action<LivingEntity> {
 		// Update time
 		this.entity.time += this.time;
 		// Inform clients about this update
-		for (Player player : game.level.allPlayers()) {
+		for (Player player : game.allPlayers()) {
 			if (player == this.entity || game.level.isLocVisible(player.x, player.y, this.entity.x, this.entity.y)) {
 				// Set animation
 				player.sendMessage.accept(new String[] {
@@ -38,6 +38,6 @@ public class AttackAction extends Action<LivingEntity> {
 			}
 		}
 		// Entity death / health update
-		game.level.checkForDeath(this.target);
+		game.checkForDeath(this.target);
 	}
 }

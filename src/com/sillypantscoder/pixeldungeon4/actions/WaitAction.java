@@ -14,7 +14,7 @@ public class WaitAction extends Action<Entity> {
 		this.entity.time += this.time;
 		// Send idle animation to clients
 		if (this.entity instanceof TileEntity tileEntity) {
-			for (Player player : game.level.allPlayers()) {
+			for (Player player : game.allPlayers()) {
 				if (player == tileEntity || game.level.isLocVisible(player.x, player.y, tileEntity.x, tileEntity.y)) {
 					// Set animation
 					player.sendMessage.accept(new String[] {

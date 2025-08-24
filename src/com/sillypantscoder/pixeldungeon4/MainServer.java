@@ -23,10 +23,10 @@ public class MainServer extends HttpServer.RequestHandler {
 		if (path.equals("/main.js")) return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/javascript").setBody(Utils.readFile("client/main.js"));
 		if (path.startsWith("/get_messages/")) {
 			String playerID = path.split("/")[2];
-			if (! game.messages.containsKey(playerID)) return new HttpResponse().setStatus(400).setBody("That player is not logged in");
+			if (! game.players.containsKey(playerID)) return new HttpResponse().setStatus(400).setBody("That player is not logged in");
 			game.doEntityTurns();
-			List<? extends List<String>> messages = game.messages.get(playerID).stream().map((v) -> Arrays.asList(v)).collect(Collectors.toList());
-			game.clearMessages(playerID);
+			List<? extends List<String>> messages = game.players.get(playerID).getMessages().stream().map((v) -> Arrays.asList(v)).collect(Collectors.toList());
+			game.players.get(playerID).clearMessages();
 			return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/plain").setBody(JSONObject.encode2DList(messages));
 		}
 		if (path.equals("/data.zip")) {
@@ -39,7 +39,7 @@ public class MainServer extends HttpServer.RequestHandler {
 		if (path.equals("/login")) return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/plain").setBody(game.loginPlayer());
 		if (path.equals("/click")) {
 			String[] bodyData = body.split("\n");
-			if (! game.messages.containsKey(bodyData[0])) return new HttpResponse().setStatus(400).setBody("That player is not logged in");
+			if (! game.players.containsKey(bodyData[0])) return new HttpResponse().setStatus(400).setBody("That player is not logged in");
 			Player player = game.getPlayerByID(bodyData[0]);
 			player.setTarget(game.level, Integer.valueOf(bodyData[1]), Integer.valueOf(bodyData[2]));
 			return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/plain");

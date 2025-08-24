@@ -6,8 +6,6 @@ import java.util.Optional;
 import com.sillypantscoder.pixeldungeon4.Game;
 import com.sillypantscoder.pixeldungeon4.actions.Action;
 import com.sillypantscoder.pixeldungeon4.entities.Entity;
-import com.sillypantscoder.pixeldungeon4.entities.LivingEntity;
-import com.sillypantscoder.pixeldungeon4.entities.Player;
 import com.sillypantscoder.pixeldungeon4.registries.TileType;
 import com.sillypantscoder.utils.LinePoints;
 import com.sillypantscoder.utils.Pathfinding;
@@ -71,43 +69,6 @@ public class Level {
 			// System.out.println(action.map((v) -> " - action: " + v.toString() + " - new time: " + targetEntity.time).orElse(" - no action"));
 			return action.isPresent();
 		} else return false;
-	}
-	public ArrayList<Player> allPlayers() {
-		ArrayList<Player> players = new ArrayList<Player>();
-		for (Entity checkEntity : this.entities) {
-			if (checkEntity instanceof Player player) {
-				players.add(player);
-			}
-		}
-		return players;
-	}
-	public void checkForDeath(LivingEntity e) {
-		if (e.health <= 0) {
-			// Send entity death to clients
-			for (Player player : allPlayers()) {
-				if (player == e || this.isLocVisible(player.x, player.y, e.x, e.y)) {
-					// Send death
-					player.sendMessage.accept(new String[] {
-						"entity_death",
-						String.valueOf(e.id)
-					});
-				}
-			}
-			// Register entity death
-			// this has to be afterwards so a player's death is sent to that player
-			this.entities.remove(e);
-		} else {
-			for (Player player : allPlayers()) {
-				if (player == e || this.isLocVisible(player.x, player.y, e.x, e.y)) {
-					// Set new target health
-					player.sendMessage.accept(new String[] {
-						"set_health",
-						String.valueOf(e.id),
-						String.valueOf(e.health)
-					});
-				}
-			}
-		}
 	}
 	public boolean isLocVisible(int x1, int y1, int x2, int y2) {
 		if (((x1-x2)*(x1-x2)) + ((y1-y2)*(y1-y2)) > 64) return false;
