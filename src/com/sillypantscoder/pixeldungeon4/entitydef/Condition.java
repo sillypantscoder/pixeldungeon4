@@ -18,6 +18,7 @@ public abstract class Condition {
 		else if (type.equals("not")) return Not.create(object);
 		else if (type.endsWith("equal-to") || type.endsWith("-than")) return Comparison.create(object);
 		else if (type.equals("has-target")) return HasTarget.create(object);
+		else if (type.equals("is-entity-type")) return IsEntityType.create(object);
 		else throw new IllegalArgumentException("Unknown condition type: " + type);
 	}
 	public static class And extends Condition {
@@ -105,6 +106,30 @@ public abstract class Condition {
 				this.func = func;
 			}
 			public boolean includes(Monster src, Optional<PathfindingTarget> target) { return this.func.apply(src, target); }
+		}
+	}
+	public static class IsEntityType extends Condition {
+		public boolean useCurrentTarget;
+		public String entityType;
+		public IsEntityType(boolean useCurrentTarget, String entityType) {
+			this.useCurrentTarget = useCurrentTarget;
+			this.entityType = entityType;
+		}
+		public CommandResult<Boolean> get(MonsterSituation situation) {
+			CommandResult<Boolean> result = new CommandResult<Boolean>(false, "Is Entity Type (using current target: " + this.useCurrentTarget + ", entity type: " + this.entityType + ")");
+			return result.setResult(checkIsEntityType((this.useCurrentTarget ? situation.current : situation.target).orElse(null), entityType));
+		}
+		public static IsEntityType create(JSONObject object) { return new IsEntityType(object.getBoolean("use_current_target"), object.getString("entity_type")); }
+		public static boolean checkIsEntityType(PathfindingTarget target, String type) {
+			if (target == null) return false;
+			if (target instanceof TileEntity targetEntity) {
+				// Check targetEntity for type
+				if (type.equals(targetEntity.getTypeID())) {
+					return true;
+				} else {
+					return false;
+				}
+			} else return false;
 		}
 	}
 }

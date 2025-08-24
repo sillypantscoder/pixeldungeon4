@@ -2,6 +2,7 @@ package com.sillypantscoder.pixeldungeon4.actions;
 
 import com.sillypantscoder.pixeldungeon4.Game;
 import com.sillypantscoder.pixeldungeon4.entities.Entity;
+import com.sillypantscoder.pixeldungeon4.entities.LivingEntity;
 import com.sillypantscoder.pixeldungeon4.entities.Monster;
 import com.sillypantscoder.pixeldungeon4.entities.PathfindingTarget;
 import com.sillypantscoder.pixeldungeon4.level.Level;
@@ -23,6 +24,11 @@ public abstract class Action<T extends Entity> {
 			int[][] path = level.findPath(e.x, e.y, target.getX(), target.getY());
 			if (path.length > 0) {
 				action = new MoveAction(e, path[1][0], path[1][1]);
+			}
+		} else if (actionName.equals("attack")) {
+			PathfindingTarget target = e.target.orElseThrow();
+			if (target instanceof LivingEntity targetEntity) {
+				action = new AttackAction(e, targetEntity);
 			}
 		}
 		if (action == null) throw new IllegalArgumentException("Unknown action name: " + actionName);

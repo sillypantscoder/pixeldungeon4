@@ -625,7 +625,7 @@ class Rendering {
 			// Health Bar
 			if (entity instanceof LivingEntity && entity.health < entity.maxHealth) {
 				var healthBar = this.createHealthBar(entity)
-				s.blit(healthBar, ((entity.x + 0.5) * this.TILE_SIZE) - (healthBar.get_width() / 2), (entity.y - 0.125) * this.TILE_SIZE)
+				s.blit(healthBar, (((entity.actor ?? entity).x + 0.5) * this.TILE_SIZE) - (healthBar.get_width() / 2), ((entity.actor ?? entity).y - 0.125) * this.TILE_SIZE)
 			}
 		}
 		return s

@@ -11,6 +11,8 @@ public abstract class NumberProvider {
 	public static NumberProvider create(JSONObject object, String key) {
 		if (object.entries_number.containsKey(key)) {
 			return new PlainNumber(object.getNumber(key));
+		} else if (object.entries_string.containsKey(key)) {
+			return new Variable(object.getString(key));
 		} else {
 			return NumberProvider.create(object.getObject(key));
 		}
@@ -22,6 +24,7 @@ public abstract class NumberProvider {
 		else if (type.equals("uniform")) return Uniform.create(object);
 		else if (type.equals("uniform-float")) return UniformFloat.create(object);
 		else if (type.equals("triangular")) return Triangular.create(object);
+		else if (type.equals("if")) return If.create(object);
 		else throw new IllegalArgumentException("Unknown number provider type: " + type);
 	}
 	public static class PlainNumber extends NumberProvider {
@@ -30,6 +33,13 @@ public abstract class NumberProvider {
 			this.n = n;
 		}
 		public double get(MonsterSituation situation) { return this.n; }
+	}
+	public static class Variable extends NumberProvider {
+		public String name;
+		public Variable(String name) {
+			this.name = name;
+		}
+		public double get(MonsterSituation situation) { return situation.get(this.name); }
 	}
 	public static class NPMath extends NumberProvider {
 		public MathOperation operation;
@@ -41,7 +51,7 @@ public abstract class NumberProvider {
 			this.argument2 = argument2;
 		}
 		public double get(MonsterSituation situation) { return this.operation.apply(this.argument1.get(situation), this.argument2.get(situation)); }
-		public static NPMath create(JSONObject object) { return new NPMath(MathOperation.valueOf(object.getString("operation")), NumberProvider.create(object, "argument1"), NumberProvider.create(object, "argument2")); }
+		public static NPMath create(JSONObject object) { return new NPMath(MathOperation.valueOf(object.getString("operation").toUpperCase()), NumberProvider.create(object, "argument1"), NumberProvider.create(object, "argument2")); }
 		public static enum MathOperation {
 			ADD((a, b) -> a + b), SUBTRACT((a, b) -> a - b), MULTIPLY((a, b) -> a * b), DIVIDE((a, b) -> a / b), EXPONENT((a, b) -> Math.pow(a, b));
 			private BiFunction<Double, Double, Double> func;
@@ -105,5 +115,17 @@ public abstract class NumberProvider {
 		}
 		public double get(MonsterSituation situation) { return Random.triangular(this.min.get(situation), this.center.get(situation), this.max.get(situation)); }
 		public static Triangular create(JSONObject object) { return new Triangular(NumberProvider.create(object, "min"), NumberProvider.create(object, "center"), NumberProvider.create(object, "max")); }
+	}
+	public static class If extends NumberProvider {
+		public Condition condition;
+		public NumberProvider ifTrue;
+		public NumberProvider ifFalse;
+		public If(Condition condition, NumberProvider ifTrue, NumberProvider ifFalse) {
+			this.condition = condition;
+			this.ifTrue = ifTrue;
+			this.ifFalse = ifFalse;
+		}
+		public double get(MonsterSituation situation) { if (this.condition.get(situation).result) { return this.ifTrue.get(situation); } else { return this.ifFalse.get(situation); } }
+		public static If create(JSONObject object) { return new If(Condition.create(object.getObject("condition")), NumberProvider.create(object, "ifTrue"), NumberProvider.create(object, "ifFalse")); }
 	}
 }

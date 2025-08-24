@@ -20,7 +20,9 @@ public class Game {
 	public Game() {
 		this.level = RoomBuildingLevelGeneration.generateLevel(45);
 		this.messages = new HashMap<String, ArrayList<String[]>>();
-		// spawn a rat
+		// spawn some rats
+		this.addFreshEntity(this.createMonsterEntity("rat"));
+		this.addFreshEntity(this.createMonsterEntity("rat"));
 		this.addFreshEntity(this.createMonsterEntity("rat"));
 		this.addFreshEntity(this.createMonsterEntity("rat"));
 	}

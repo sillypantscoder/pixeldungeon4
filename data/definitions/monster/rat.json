@@ -5,6 +5,37 @@
 		{
 			"type": "if",
 			"condition": {
+				"type": "not",
+				"argument": {
+					"type": "has-target",
+					"minimum_target_type": "any"
+				}
+			},
+			"ifTrue": [
+				{
+					"type": "find-target-entity",
+					"entity_weight": {
+						"type": "math",
+						"operation": "subtract",
+						"argument1": {
+							"type": "if",
+							"condition": {
+								"type": "is-entity-type",
+								"use_current_target": true,
+								"entity_type": "player"
+							},
+							"ifTrue": 30,
+							"ifFalse": -100
+						},
+						"argument2": "current.pathDistance"
+					}
+				}
+			],
+			"ifFalse": []
+		},
+		{
+			"type": "if",
+			"condition": {
 				"type": "and",
 				"argument1": {
 					"type": "not",
@@ -32,22 +63,39 @@
 			"type": "if",
 			"condition": {
 				"type": "has-target",
-				"minimum_target_type": "any"
+				"minimum_target_type": "attackable"
 			},
 			"ifTrue": [
 				{
 					"type": "return-action",
-					"action": "pathfind",
-					"time_scale": 1,
+					"action": "attack",
+					"time_scale": 2,
 					"extra_time": 0
 				}
 			],
 			"ifFalse": [
 				{
-					"type": "return-action",
-					"action": "wait",
-					"time_scale": 1,
-					"extra_time": 0
+					"type": "if",
+					"condition": {
+						"type": "has-target",
+						"minimum_target_type": "any"
+					},
+					"ifTrue": [
+						{
+							"type": "return-action",
+							"action": "pathfind",
+							"time_scale": 1,
+							"extra_time": 0
+						}
+					],
+					"ifFalse": [
+						{
+							"type": "return-action",
+							"action": "wait",
+							"time_scale": 1,
+							"extra_time": 0
+						}
+					]
 				}
 			]
 		}

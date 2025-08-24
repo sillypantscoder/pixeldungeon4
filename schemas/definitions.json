@@ -33,6 +33,7 @@
 		"number_provider": {
 			"oneOf": [
 				{ "type": "number" },
+				{ "type": "string", "enum": ["self.health", "target.distance", "target.pathDistance", "target.health", "current.distance", "current.pathDistance", "current.health"] },
 				{ "type": "object", "properties": {
 					"type": { "type": "string", "enum": ["math"] },
 					"operation": { "type": "string", "enum": ["add", "subtract", "multiply", "divide", "exponent"] },
@@ -77,8 +78,7 @@
 				}, "required": ["type", "argument1", "argument2"] },
 				{ "type": "object", "properties": {
 					"type": { "type": "string", "enum": ["not"] },
-					"argument1": { "$ref": "#/properties/condition" },
-					"argument2": { "$ref": "#/properties/condition" }
+					"argument": { "$ref": "#/properties/condition" }
 				}, "required": ["type", "argument"] },
 				{ "type": "object", "properties": {
 					"type": { "type": "string", "enum": ["less-than", "greater-than", "less-than-equal-to", "greater-than-equal-to", "equal-to"] },
