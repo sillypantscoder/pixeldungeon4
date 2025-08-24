@@ -3,6 +3,7 @@ package com.sillypantscoder.pixeldungeon4.actions;
 import com.sillypantscoder.pixeldungeon4.Game;
 import com.sillypantscoder.pixeldungeon4.entities.Player;
 import com.sillypantscoder.pixeldungeon4.entities.TileEntity;
+import com.sillypantscoder.pixeldungeon4.registries.TileType;
 
 public class MoveAction extends Action<TileEntity> {
 	public int targetX;
@@ -17,11 +18,37 @@ public class MoveAction extends Action<TileEntity> {
 		if (this.targetX < 0 || this.targetY < 0 || this.targetX >= game.level.tiles.length || this.targetY >= game.level.tiles[0].length) {
 			throw new RuntimeException("Can't move to a location out of bounds! Entity: " + this.entity + ", TargetX: " + this.targetX + ", TargetY: " + this.targetY);
 		}
+		// On leave trigger
+		TileType leftTile = game.level.tiles[this.entity.x][this.entity.y].getData();
+		leftTile.onLeave.ifPresent((v) -> {
+			game.level.tiles[this.entity.x][this.entity.y].state = v;
+			for (Player p : game.allPlayers()) {
+				if (game.level.isLocVisible(this.entity.x, this.entity.y, p.x, p.y)) {
+					p.sendMessage.accept(new String[] {
+						"show_tiles",
+						this.entity.x + " " + this.entity.y + " " + game.level.tiles[this.entity.x][this.entity.y].state
+					});
+				}
+			}
+		});
 		// Entity position
 		this.entity.x = this.targetX;
 		this.entity.y = this.targetY;
 		// Update time
 		this.entity.time += this.time;
+		// On enter trigger
+		TileType enteredTile = game.level.tiles[this.entity.x][this.entity.y].getData();
+		enteredTile.onEnter.ifPresent((v) -> {
+			game.level.tiles[this.entity.x][this.entity.y].state = v;
+			for (Player p : game.allPlayers()) {
+				if (game.level.isLocVisible(this.entity.x, this.entity.y, p.x, p.y)) {
+					p.sendMessage.accept(new String[] {
+						"show_tiles",
+						this.entity.x + " " + this.entity.y + " " + game.level.tiles[this.entity.x][this.entity.y].state
+					});
+				}
+			}
+		});
 		// Inform clients about this update
 		for (Player player : game.allPlayers()) {
 			if (player == this.entity || game.level.isLocVisible(player.x, player.y, this.targetX, this.targetY)) {

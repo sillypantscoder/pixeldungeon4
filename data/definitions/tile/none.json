@@ -1,5 +1,7 @@
 {
 	"$schema": "../../../schemas/tile_definition.json",
 	"collisionType": "none",
-	"canSeeThrough": true
+	"canSeeThrough": true,
+	"onEnter": "none",
+	"onLeave": "none"
 }

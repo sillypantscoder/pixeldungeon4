@@ -8,10 +8,36 @@
 		},
 		"canSeeThrough": {
 			"type": "boolean"
+		},
+		"onEnter": {
+			"oneOf": [
+				{ "type": "string", "enum": ["none"] },
+				{
+					"type": "object",
+					"properties": {
+						"type": { "type": "string", "enum": ["change_tile"] },
+						"tile": { "type": "string" }
+					}
+				}
+			]
+		},
+		"onLeave": {
+			"oneOf": [
+				{ "type": "string", "enum": ["none"] },
+				{
+					"type": "object",
+					"properties": {
+						"type": { "type": "string", "enum": ["change_tile"] },
+						"tile": { "type": "string" }
+					}
+				}
+			]
 		}
 	},
 	"required": [
 		"collisionType",
-		"canSeeThrough"
+		"canSeeThrough",
+		"onEnter",
+		"onLeave"
 	]
 }
