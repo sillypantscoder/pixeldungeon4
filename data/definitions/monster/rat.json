@@ -1,6 +1,10 @@
 {
 	"$schema": "../../../schemas/monster_definition.json",
-	"health": 6,
+	"health": {
+		"type": "uniform",
+		"min": 6,
+		"max": 9
+	},
 	"behavior": [
 		{
 			"type": "if",

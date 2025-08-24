@@ -16,12 +16,14 @@ public class Player extends LivingEntity {
 	public Optional<PathfindingTarget> target;
 	public Consumer<String[]> sendMessage;
 	public ArrayList<TileEntity> visibleEntities;
+	public int healingTime;
 	public Player(String playerID, int time, int x, int y, Consumer<String[]> sendMessage) {
-		super(time, x, y, 10);
+		super(time, x, y, 20);
 		this.playerID = playerID;
 		this.target = Optional.empty();
 		this.sendMessage = sendMessage;
 		this.visibleEntities = new ArrayList<TileEntity>();
+		this.healingTime = time + 10;
 	}
 	public String getTypeID() { return "player"; }
 	public void sendVision(Level level) {
@@ -63,6 +65,13 @@ public class Player extends LivingEntity {
 		}
 	}
 	public Optional<Action<?>> getAction(Level level) {
+		// Healing
+		if (this.time >= this.healingTime) {
+			this.healingTime += 64;
+			this.health += 1;
+			if (this.health > this.maxHealth) this.health = this.maxHealth;
+			level.updateEntityHealth.accept(this);
+		}
 		// Update target
 		this.target = this.target.map((v) -> v.update(level, this.x, this.y));
 		AtomicReference<Optional<Action<?>>> action = new AtomicReference<Optional<Action<?>>>(Optional.empty());

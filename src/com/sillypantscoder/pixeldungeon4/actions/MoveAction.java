@@ -17,9 +17,6 @@ public class MoveAction extends Action<TileEntity> {
 		if (this.targetX < 0 || this.targetY < 0 || this.targetX >= game.level.tiles.length || this.targetY >= game.level.tiles[0].length) {
 			throw new RuntimeException("Can't move to a location out of bounds! Entity: " + this.entity + ", TargetX: " + this.targetX + ", TargetY: " + this.targetY);
 		}
-		// Save previous position
-		int previousX = this.entity.x;
-		int previousY = this.entity.y;
 		// Entity position
 		this.entity.x = this.targetX;
 		this.entity.y = this.targetY;
@@ -27,7 +24,7 @@ public class MoveAction extends Action<TileEntity> {
 		this.entity.time += this.time;
 		// Inform clients about this update
 		for (Player player : game.allPlayers()) {
-			if (player == this.entity || game.level.isLocVisible(player.x, player.y, previousX, previousY) || game.level.isLocVisible(player.x, player.y, this.targetX, this.targetY)) {
+			if (player == this.entity || game.level.isLocVisible(player.x, player.y, this.targetX, this.targetY)) {
 				// Create entity if it does not exist
 				if (! player.visibleEntities.contains(this.entity)) {
 					player.visibleEntities.add(this.entity);

@@ -20,8 +20,13 @@ public class Game {
 	public HashMap<String, PlayerData> players;
 	public Game() {
 		this.level = RoomBuildingLevelGeneration.generateLevel(45);
+		this.level.updateEntityHealth = this::updateEntityHealth;
 		this.players = new HashMap<String, PlayerData>();
 		// spawn some rats
+		this.addFreshEntity(this.createMonsterEntity("rat"));
+		this.addFreshEntity(this.createMonsterEntity("rat"));
+		this.addFreshEntity(this.createMonsterEntity("rat"));
+		this.addFreshEntity(this.createMonsterEntity("rat"));
 		this.addFreshEntity(this.createMonsterEntity("rat"));
 		this.addFreshEntity(this.createMonsterEntity("rat"));
 		this.addFreshEntity(this.createMonsterEntity("rat"));
@@ -95,16 +100,15 @@ public class Game {
 		// *Not related to Minecraft
 		this.level.entities.add(e);
 		if (e instanceof TileEntity tileEntity) {
-			for (String playerID : this.players.keySet()) {
+			for (Player p : allPlayers()) {
 				// Check if player can see it
-				Player p = this.getPlayerByID(playerID);
 				if (! this.level.isLocVisible(p.x, p.y, tileEntity.x, tileEntity.y)) continue;
 				// Send message!
 				String[] data = new String[] {
 					"create_entity",
 					tileEntity.serialize().toString()
 				};
-				players.get(playerID).sendMessage(data);
+				p.sendMessage.accept(data);
 			}
 		}
 	}
@@ -117,7 +121,7 @@ public class Game {
 	public List<Player> allPlayers() {
 		return this.players.values().stream().map((v) -> v.player()).toList();
 	}
-	public void checkForDeath(LivingEntity e) {
+	public void updateEntityHealth(LivingEntity e) {
 		if (e.health <= 0) {
 			// Send entity death to clients
 			for (Player player : allPlayers()) {

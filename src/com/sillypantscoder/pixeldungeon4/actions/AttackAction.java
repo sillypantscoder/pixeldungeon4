@@ -38,6 +38,6 @@ public class AttackAction extends Action<LivingEntity> {
 			}
 		}
 		// Entity death / health update
-		game.checkForDeath(this.target);
+		game.updateEntityHealth(this.target);
 	}
 }

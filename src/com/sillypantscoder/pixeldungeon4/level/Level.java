@@ -2,10 +2,12 @@ package com.sillypantscoder.pixeldungeon4.level;
 
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import com.sillypantscoder.pixeldungeon4.Game;
 import com.sillypantscoder.pixeldungeon4.actions.Action;
 import com.sillypantscoder.pixeldungeon4.entities.Entity;
+import com.sillypantscoder.pixeldungeon4.entities.LivingEntity;
 import com.sillypantscoder.pixeldungeon4.registries.TileType;
 import com.sillypantscoder.utils.LinePoints;
 import com.sillypantscoder.utils.Pathfinding;
@@ -14,6 +16,7 @@ import com.sillypantscoder.utils.Random;
 public class Level {
 	public Tile[][] tiles;
 	public ArrayList<Entity> entities;
+	public Consumer<LivingEntity> updateEntityHealth;
 	public Level(int width, int height) {
 		tiles = new Tile[width][height];
 		for (int x = 0; x < width; x++) {
