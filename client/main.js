@@ -275,8 +275,9 @@ class SpritesheetDisplay {
 		this.frameTime += 1
 		if (this.frameTime == 8) {
 			this.frameTime = 0
-			this.nextAnimationFrame()
+			return this.nextAnimationFrame()
 		}
+		return true;
 	}
 	nextAnimationFrame() {
 		this.currentAnimationPos += 1
@@ -286,12 +287,13 @@ class SpritesheetDisplay {
 			if (! Object.keys(this.animations).includes(next)) {
 				// There is no next animation... repeat this frame forever...?
 				this.currentAnimationPos -= 1;
-				return;
+				return false;
 			}
 			// Set current animation
 			this.currentAnimation = next
 			this.currentAnimationPos = 0
 		}
+		return true;
 	}
 	getFrame() {
 		var image_pos = this.animations[this.currentAnimation].frames[this.currentAnimationPos]
@@ -360,7 +362,7 @@ class Entity {
 	 * @abstract
 	 * @returns {string}
 	 */
-	getEntityID() { throw new Error("`Entity` is an abstract class, `getID` must be overridden"); }
+	getEntityID() { throw new Error("`Entity` is an abstract class, `getEntityID` must be overridden"); }
 	/**
 	 * @param {AssetManager} assets
 	 */
@@ -435,6 +437,68 @@ class Monster extends LivingEntity {
 	getEntityID() { return this.typeID }
 }
 
+class Particle {
+	/**
+	 * @abstract
+	 * @param {Surface} s
+	 * @returns {Particle[]} The list of particles that should be rendered next frame. Generally should include either self, or an empty list.
+	 */
+	draw(s) { throw new Error("`Particle` is an abstract class, `draw` must be overridden"); }
+}
+class AttackParticle extends Particle {
+	/**
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} vx
+	 * @param {number} vy
+	 */
+	constructor(x, y, vx, vy) {
+		super()
+		this.x = x
+		this.y = y
+		this.vx = vx + (0.125 * (Math.random() - 0.5))
+		this.vy = vy + (0.125 * (Math.random() - 0.5))
+		this.size = 0.125 + (Math.random() * 0.125)
+	}
+	/**
+	 * @param {Surface} s
+	 */
+	draw(s) {
+		this.x += this.vx
+		this.y += this.vy
+		this.vx *= 0.995
+		this.vy *= 0.995
+		s.drawRect((this.x - (this.size / 2)) * Rendering.TILE_SIZE, (this.y - (this.size / 2)) * Rendering.TILE_SIZE, this.size * Rendering.TILE_SIZE, this.size * Rendering.TILE_SIZE, "red")
+		this.size -= 0.015625
+		if (this.size > 0) return [this]
+		else return []
+	}
+}
+class DeadEntityParticle extends Particle {
+	/**
+	 * @param {Actor} actor
+	 */
+	constructor(actor) {
+		super()
+		this.actor = actor
+		this.actor.setAnimation("death")
+		this.opacity = 1
+	}
+	/**
+	 * @param {Surface} s
+	 */
+	draw(s) {
+		// Draw actor
+		var animationFrame = this.actor.sprites.getFrame()
+		s.blitTransparent(animationFrame, this.actor.x * Rendering.TILE_SIZE, this.actor.y * Rendering.TILE_SIZE, this.opacity);
+		// Next frame
+		var wentToNextFrame = this.actor.sprites.nextFrame()
+		if (! wentToNextFrame) this.opacity -= 0.125;
+		if (this.opacity > 0) return [this]
+		else return []
+	}
+}
+
 /** @typedef {{ state: string, visibility: 0 | 1 | 2 }} TileState */
 class Game {
 	/** @param {Main} main */
@@ -444,6 +508,8 @@ class Game {
 		this.level = [[{ state: "none", visibility: 0 }]]
 		/** @type {Entity[]} */
 		this.entities = []
+		/** @type {Particle[]} */
+		this.particles = []
 		this.me = new Player(0, 0, 0, 0, 0);
 		this.assets = new AssetManager()
 	}
@@ -538,6 +604,14 @@ class Rendering {
 		return s
 	}
 	/**
+	 * @param {LivingEntity} entity
+	 */
+	static createHealthBar(entity) {
+		var s = new Surface(this.TILE_SIZE * 1.25, this.TILE_SIZE * 0.25, "red");
+		s.drawRect(0, 0, s.get_width() * entity.health / entity.maxHealth, s.get_height(), "green");
+		return s;
+	}
+	/**
 	 * @param {TileState[][]} level
 	 * @param {Entity[]} entities
 	 * @param {AssetManager} assetManager
@@ -548,6 +622,11 @@ class Rendering {
 			var entityImage = entity.getNextFrame(assetManager)
 			var actorPos = entity.actor ?? { x: -1, y: -1 }
 			s.blit(entityImage, actorPos.x * this.TILE_SIZE, actorPos.y * this.TILE_SIZE)
+			// Health Bar
+			if (entity instanceof LivingEntity && entity.health < entity.maxHealth) {
+				var healthBar = this.createHealthBar(entity)
+				s.blit(healthBar, ((entity.x + 0.5) * this.TILE_SIZE) - (healthBar.get_width() / 2), (entity.y - 0.125) * this.TILE_SIZE)
+			}
 		}
 		return s
 	}
@@ -560,6 +639,13 @@ class Rendering {
 		if (target != null) {
 			var texture = game.assets.getTexture("special", "target_" + (target instanceof Entity ? "entity" : "pos"));
 			s.blit(texture, target.x * this.TILE_SIZE, target.y * this.TILE_SIZE);
+		}
+		// Render particles
+		var renderedParticles = [...game.particles]
+		game.particles = []
+		for (var particle of renderedParticles) {
+			var newParticles = particle.draw(s)
+			game.particles.push(...newParticles)
 		}
 		// Draw to canvas!
 		s.drawToCanvas(this.LEVEL_CANVAS);
@@ -683,6 +769,41 @@ class Main {
 			var entity = this.game.getEntityByID(Number(message[1]))
 			if (entity == null) throw new Error("Can't set animation of nonexistent entity")
 			entity.actor?.setAnimation(message[2])
+		} else if (message[0] == "set_health") {
+			var entity = this.game.getEntityByID(Number(message[1]))
+			if (entity == null) throw new Error("Can't set health of nonexistent entity")
+			if (! (entity instanceof LivingEntity)) throw new Error("Can't set health of nonliving entity")
+			entity.health = Number(message[2])
+		} else if (message[0] == "create_particle") {
+			if (message[1] == "attack") {
+				var entityFrom = this.game.getEntityByID(Number(message[2]))
+				if (entityFrom == null) throw new Error("Can't get position of nonexistent entity")
+				var entityTo = this.game.getEntityByID(Number(message[3]))
+				if (entityTo == null) throw new Error("Can't get position of nonexistent entity")
+				// calculate velocity
+				var vx = entityTo.x - entityFrom.x
+				var vy = entityTo.y - entityFrom.y
+				var dist = Math.sqrt(Math.pow(vx, 2) + Math.pow(vy, 2))
+				vx /= dist; vy /= dist;
+				// create particles
+				for (var i = 0; i < 7; i++) {
+					var particle = new AttackParticle(entityTo.x + 0.5, entityTo.y + 0.5, vx / 8, vy / 8);
+					this.game.particles.push(particle)
+				}
+			} else {
+				throw new Error("Unknown particle type: " + message[1])
+			}
+		} else if (message[0] == "entity_death") {
+			var entity = this.game.getEntityByID(Number(message[1]))
+			if (entity == null) throw new Error("Can't register death for nonexistent entity")
+			if (! (entity instanceof LivingEntity)) throw new Error("Can't register death for nonliving entity")
+			// death
+			entity.health = 0
+			if (entity.actor != null) {
+				var entity_particle = new DeadEntityParticle(entity.actor)
+				this.game.particles.push(entity_particle)
+			}
+			this.game.entities.splice(this.game.entities.indexOf(entity), 1)
 		} else {
 			console.log("Unknown message!", message)
 		}

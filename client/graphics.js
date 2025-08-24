@@ -27,6 +27,28 @@ class Surface {
 	blit(other, x, y) {
 		this.context.drawImage(other instanceof Surface ? other.canvas : other, x, y)
 	}
+	/**
+	 * @param {Surface | HTMLImageElement} other
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} opacity
+	 */
+	blitTransparent(other, x, y, opacity) {
+		this.context.globalAlpha = opacity
+		this.context.drawImage(other instanceof Surface ? other.canvas : other, x, y)
+		this.context.globalAlpha = 1.0
+	}
+	/**
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} w
+	 * @param {number} h
+	 * @param {string} color
+	 */
+	drawRect(x, y, w, h, color) {
+		this.context.fillStyle = color
+		this.context.fillRect(x, y, w, h)
+	}
 	copy() {
 		var o = new Surface(this.canvas.width, this.canvas.height, "transparent")
 		o.blit(this, 0, 0)

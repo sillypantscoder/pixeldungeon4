@@ -6,7 +6,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import com.sillypantscoder.pixeldungeon4.actions.Action;
+import com.sillypantscoder.pixeldungeon4.actions.AttackAction;
+import com.sillypantscoder.pixeldungeon4.actions.MoveAction;
 import com.sillypantscoder.pixeldungeon4.level.Level;
+import com.sillypantscoder.utils.Random;
 
 public class Player extends LivingEntity {
 	public String playerID;
@@ -80,7 +83,15 @@ public class Player extends LivingEntity {
 				this.sendMessage.accept(new String[] { "clear_target" });
 				return;
 			}
-			action.set(Optional.of(new Action.MoveAction(this, path[1][0], path[1][1])));
+			if (path.length <= 2) {
+				if (v instanceof LivingEntity targetEntity) {
+					this.target = Optional.empty();
+					this.sendMessage.accept(new String[] { "clear_target" });
+					action.set(Optional.of(new AttackAction(this, targetEntity)));
+					return;
+				}
+			}
+			action.set(Optional.of(new MoveAction(this, path[1][0], path[1][1])));
 		});
 		return action.get();
 	}
@@ -97,4 +108,14 @@ public class Player extends LivingEntity {
 			this.target = Optional.of(new PathfindingTarget.StaticPosition(x, y));
 		}
 	}
+	public void afterMove(Level level) {
+		if (this.target.map((v) -> (this.x == v.getX()) && (this.y == v.getY())).orElse(false)) {
+			// Clear player target
+			this.sendMessage.accept(new String[] { "clear_target" });
+			this.sendMessage.accept(new String[] { "set_animation", String.valueOf(this.id), "idle" });
+			this.target = Optional.empty();
+		}
+		this.sendVision(level);
+	}
+	public int getDamage() { return Random.randint(1, 5); }
 }

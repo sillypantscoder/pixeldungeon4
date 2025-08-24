@@ -9,6 +9,7 @@ import com.sillypantscoder.pixeldungeon4.entitydef.CommandResult;
 import com.sillypantscoder.pixeldungeon4.entitydef.MonsterSituation;
 import com.sillypantscoder.pixeldungeon4.level.Level;
 import com.sillypantscoder.pixeldungeon4.registries.MonsterType;
+import com.sillypantscoder.utils.Random;
 
 public class Monster extends LivingEntity {
 	public static boolean DEBUG_BEHAVIOR = false;
@@ -44,4 +45,5 @@ public class Monster extends LivingEntity {
 		}
 		throw new RuntimeException("Entity behavior didn't return an action! Entity: " + this.typeID);
 	}
+	public int getDamage() { return Random.randint(1, 4); }
 }

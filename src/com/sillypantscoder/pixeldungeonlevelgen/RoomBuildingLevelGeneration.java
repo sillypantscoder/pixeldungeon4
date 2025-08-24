@@ -15,7 +15,7 @@ import com.sillypantscoder.utils.Rect;
  */
 public class RoomBuildingLevelGeneration {
 	public static void main(String[] args) {
-		Tile[][] level = generateLevel(60).tiles;
+		Tile[][] level = generateLevel(45).tiles;
 		// Print level as ASCII art
 		for (int y = 0; y < level[0].length; y++) {
 			for (int x = 0; x < level.length; x++) {

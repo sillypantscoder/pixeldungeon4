@@ -1,5 +1,6 @@
 package com.sillypantscoder.pixeldungeon4.entities;
 
+import com.sillypantscoder.pixeldungeon4.level.Level;
 import com.sillypantscoder.utils.JSONObject;
 import com.sillypantscoder.utils.Random;
 
@@ -22,4 +23,5 @@ public abstract class TileEntity extends Entity implements PathfindingTarget {
 		obj.setNumber("y", this.y);
 		return obj;
 	}
+	public void afterMove(Level level) {}
 }

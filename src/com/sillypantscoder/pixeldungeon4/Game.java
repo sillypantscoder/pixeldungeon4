@@ -18,7 +18,7 @@ public class Game {
 	public Level level;
 	public HashMap<String, ArrayList<String[]>> messages;
 	public Game() {
-		this.level = RoomBuildingLevelGeneration.generateLevel(60);
+		this.level = RoomBuildingLevelGeneration.generateLevel(45);
 		this.messages = new HashMap<String, ArrayList<String[]>>();
 		// spawn a rat
 		this.addFreshEntity(this.createMonsterEntity("rat"));

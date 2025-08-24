@@ -10,6 +10,7 @@ public abstract class LivingEntity extends TileEntity {
 		this.health = health;
 		this.maxHealth = health;
 	}
+	public abstract int getDamage();
 	public JSONObject serialize() {
 		JSONObject obj = super.serialize();
 		obj.set("health", this.health);
