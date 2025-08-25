@@ -498,6 +498,35 @@ class DeadEntityParticle extends Particle {
 		else return []
 	}
 }
+class GrassParticle extends Particle {
+	/**
+	 * @param {number} x
+	 * @param {number} y
+	 */
+	constructor(x, y) {
+		super()
+		this.x = x + 0.5 + (0.75 * (Math.random() - 0.5))
+		this.y = y + 0.5 + (0.75 * (Math.random() - 0.5))
+		this.vx = 0.03125 * 1.5 * (Math.random() - 0.5)
+		this.vy = 0.03125 * 1.5 * (Math.random() - 0.6)
+		this.size = 0.0625 + (Math.random() * 0.125)
+		this.opacity = 1
+	}
+	/**
+	 * @param {Surface} s
+	 */
+	draw(s) {
+		this.x += this.vx
+		this.y += this.vy
+		this.vx *= 0.995
+		this.vy *= 0.995
+		this.vy += 1/2048
+		s.drawRect((this.x - (this.size / 2)) * Rendering.TILE_SIZE, (this.y - (this.size / 2)) * Rendering.TILE_SIZE, this.size * Rendering.TILE_SIZE, this.size * Rendering.TILE_SIZE, `rgba(68, 119, 51, ${this.opacity})`)
+		this.opacity -= 1/64
+		if (this.opacity > 0) return [this]
+		else return []
+	}
+}
 
 /** @typedef {{ state: string, visibility: 0 | 1 | 2 }} TileState */
 class Game {
@@ -789,7 +818,17 @@ class Main {
 				vx /= dist; vy /= dist;
 				// create particles
 				for (var i = 0; i < 7; i++) {
-					var particle = new AttackParticle(entityTo.x + 0.5, entityTo.y + 0.5, vx / 8, vy / 8);
+					let particle = new AttackParticle(entityTo.x + 0.5, entityTo.y + 0.5, vx / 8, vy / 8);
+					this.game.particles.push(particle)
+				}
+			} else if (message[1] == "grass") {
+				// Wait for animation to finish
+				while (this.game.me.x != this.game.me.actor?.x || this.game.me.y != this.game.me.actor?.y) await new Promise((resolve) => requestAnimationFrame(resolve))
+				var cx = Number(message[2].split(" ")[0])
+				var cy = Number(message[2].split(" ")[1])
+				// create particles
+				for (var i = 0; i < 23; i++) {
+					let particle = new GrassParticle(cx, cy);
 					this.game.particles.push(particle)
 				}
 			} else {

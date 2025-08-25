@@ -10,28 +10,28 @@
 			"type": "boolean"
 		},
 		"onEnter": {
-			"oneOf": [
-				{ "type": "string", "enum": ["none"] },
-				{
-					"type": "object",
-					"properties": {
-						"type": { "type": "string", "enum": ["change_tile"] },
-						"tile": { "type": "string" }
+			"type": "array",
+			"items": {
+				"oneOf": [
+					{
+						"type": "object",
+						"properties": {
+							"type": { "type": "string", "enum": ["change-tile"] },
+							"tile": { "type": "string" }
+						}
+					},
+					{
+						"type": "object",
+						"properties": {
+							"type": { "type": "string", "enum": ["spawn-particles"] },
+							"particle_data": { "type": "string" }
+						}
 					}
-				}
-			]
+				]
+			}
 		},
 		"onLeave": {
-			"oneOf": [
-				{ "type": "string", "enum": ["none"] },
-				{
-					"type": "object",
-					"properties": {
-						"type": { "type": "string", "enum": ["change_tile"] },
-						"tile": { "type": "string" }
-					}
-				}
-			]
+			"$ref": "#/properties/onEnter"
 		}
 	},
 	"required": [

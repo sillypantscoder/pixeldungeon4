@@ -20,17 +20,7 @@ public class MoveAction extends Action<TileEntity> {
 		}
 		// On leave trigger
 		TileType leftTile = game.level.tiles[this.entity.x][this.entity.y].getData();
-		leftTile.onLeave.ifPresent((v) -> {
-			game.level.tiles[this.entity.x][this.entity.y].state = v;
-			for (Player p : game.allPlayers()) {
-				if (game.level.isLocVisible(this.entity.x, this.entity.y, p.x, p.y)) {
-					p.sendMessage.accept(new String[] {
-						"show_tiles",
-						this.entity.x + " " + this.entity.y + " " + game.level.tiles[this.entity.x][this.entity.y].state
-					});
-				}
-			}
-		});
+		leftTile.onLeave.forEach((data) -> TileType.doAction(data, game, this.entity.x, this.entity.y));
 		// Entity position
 		this.entity.x = this.targetX;
 		this.entity.y = this.targetY;
@@ -38,17 +28,7 @@ public class MoveAction extends Action<TileEntity> {
 		this.entity.time += this.time;
 		// On enter trigger
 		TileType enteredTile = game.level.tiles[this.entity.x][this.entity.y].getData();
-		enteredTile.onEnter.ifPresent((v) -> {
-			game.level.tiles[this.entity.x][this.entity.y].state = v;
-			for (Player p : game.allPlayers()) {
-				if (game.level.isLocVisible(this.entity.x, this.entity.y, p.x, p.y)) {
-					p.sendMessage.accept(new String[] {
-						"show_tiles",
-						this.entity.x + " " + this.entity.y + " " + game.level.tiles[this.entity.x][this.entity.y].state
-					});
-				}
-			}
-		});
+		enteredTile.onEnter.forEach((data) -> TileType.doAction(data, game, this.entity.x, this.entity.y));
 		// Inform clients about this update
 		for (Player player : game.allPlayers()) {
 			if (player == this.entity || game.level.isLocVisible(player.x, player.y, this.targetX, this.targetY)) {

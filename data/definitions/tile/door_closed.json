@@ -2,9 +2,11 @@
 	"$schema": "../../../schemas/tile_definition.json",
 	"collisionType": "normal",
 	"canSeeThrough": false,
-	"onEnter": {
-		"type": "change_tile",
-		"tile": "door_open"
-	},
-	"onLeave": "none"
+	"onEnter": [
+		{
+			"type": "change-tile",
+			"tile": "door_open"
+		}
+	],
+	"onLeave": []
 }

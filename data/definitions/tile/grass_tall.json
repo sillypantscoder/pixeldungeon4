@@ -2,9 +2,15 @@
 	"$schema": "../../../schemas/tile_definition.json",
 	"collisionType": "normal",
 	"canSeeThrough": false,
-	"onEnter": {
-		"type": "change_tile",
-		"tile": "grass_short"
-	},
-	"onLeave": "none"
+	"onEnter": [
+		{
+			"type": "change-tile",
+			"tile": "grass_short"
+		},
+		{
+			"type": "spawn-particles",
+			"particle_data": "grass"
+		}
+	],
+	"onLeave": []
 }
