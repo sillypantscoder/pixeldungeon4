@@ -67,7 +67,7 @@ public class Player extends LivingEntity {
 	public Optional<Action<?>> getAction(Level level) {
 		// Healing
 		if (this.time >= this.healingTime) {
-			this.healingTime += 64;
+			this.healingTime += 128;
 			this.health += 1;
 			if (this.health > this.maxHealth) this.health = this.maxHealth;
 			level.updateEntityHealth.accept(this);

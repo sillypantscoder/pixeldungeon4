@@ -441,9 +441,11 @@ class Particle {
 	/**
 	 * @abstract
 	 * @param {Surface} s
+	 * @param {number} cameraX
+	 * @param {number} cameraY
 	 * @returns {Particle[]} The list of particles that should be rendered next frame. Generally should include either self, or an empty list.
 	 */
-	draw(s) { throw new Error("`Particle` is an abstract class, `draw` must be overridden"); }
+	draw(s, cameraX, cameraY) { throw new Error("`Particle` is an abstract class, `draw` must be overridden"); }
 }
 class AttackParticle extends Particle {
 	/**
@@ -462,13 +464,15 @@ class AttackParticle extends Particle {
 	}
 	/**
 	 * @param {Surface} s
+	 * @param {number} cameraX
+	 * @param {number} cameraY
 	 */
-	draw(s) {
+	draw(s, cameraX, cameraY) {
 		this.x += this.vx
 		this.y += this.vy
 		this.vx *= 0.995
 		this.vy *= 0.995
-		s.drawRect((this.x - (this.size / 2)) * Rendering.TILE_SIZE, (this.y - (this.size / 2)) * Rendering.TILE_SIZE, this.size * Rendering.TILE_SIZE, this.size * Rendering.TILE_SIZE, "red")
+		s.drawRect(((this.x - (this.size / 2)) * Rendering.TILE_SIZE) - cameraX, ((this.y - (this.size / 2)) * Rendering.TILE_SIZE) - cameraY, this.size * Rendering.TILE_SIZE, this.size * Rendering.TILE_SIZE, "red")
 		this.size -= 0.015625
 		if (this.size > 0) return [this]
 		else return []
@@ -486,11 +490,13 @@ class DeadEntityParticle extends Particle {
 	}
 	/**
 	 * @param {Surface} s
+	 * @param {number} cameraX
+	 * @param {number} cameraY
 	 */
-	draw(s) {
+	draw(s, cameraX, cameraY) {
 		// Draw actor
 		var animationFrame = this.actor.sprites.getFrame()
-		s.blitTransparent(animationFrame, this.actor.x * Rendering.TILE_SIZE, this.actor.y * Rendering.TILE_SIZE, this.opacity);
+		s.blitTransparent(animationFrame, (this.actor.x * Rendering.TILE_SIZE) - cameraX, (this.actor.y * Rendering.TILE_SIZE) - cameraY, this.opacity);
 		// Next frame
 		var wentToNextFrame = this.actor.sprites.nextFrame()
 		if (! wentToNextFrame) this.opacity -= 0.125;
@@ -514,14 +520,17 @@ class GrassParticle extends Particle {
 	}
 	/**
 	 * @param {Surface} s
+	 * @param {number} cameraX
+	 * @param {number} cameraY
 	 */
-	draw(s) {
+	draw(s, cameraX, cameraY) {
 		this.x += this.vx
 		this.y += this.vy
 		this.vx *= 0.995
 		this.vy *= 0.995
 		this.vy += 1/2048
-		s.drawRect((this.x - (this.size / 2)) * Rendering.TILE_SIZE, (this.y - (this.size / 2)) * Rendering.TILE_SIZE, this.size * Rendering.TILE_SIZE, this.size * Rendering.TILE_SIZE, `rgba(68, 119, 51, ${this.opacity})`)
+		s.drawRect(((this.x - (this.size / 2)) * Rendering.TILE_SIZE) - cameraX, ((this.y - (this.size / 2)) * Rendering.TILE_SIZE) - cameraY,
+			this.size * Rendering.TILE_SIZE, this.size * Rendering.TILE_SIZE, `rgba(68, 119, 51, ${this.opacity})`)
 		this.opacity -= 1/64
 		if (this.opacity > 0) return [this]
 		else return []
@@ -614,7 +623,7 @@ class Rendering {
 		this.LEVEL_CANVAS.addEventListener("click", (e) => {
 			var x = e.clientX
 			var y = e.clientY
-			Rendering.click(game, Math.floor(x / this.TILE_SIZE), Math.floor(y / this.TILE_SIZE));
+			Rendering.click(game, x, y);
 		})
 	}
 	/**
@@ -661,19 +670,24 @@ class Rendering {
 	}
 	/** @param {Game} game */
 	static renderWholeScreen(game) {
-		var s = this.renderTiles(game.level, game.assets);
-		s.blit(this.renderEntities(game.level, game.entities, game.assets), 0, 0);
+		// Find camera position
+		var cameraX = Math.round(((game.me.actor ?? { x: 0 }).x * this.TILE_SIZE) - (this.LEVEL_CANVAS.width / 2));
+		var cameraY = Math.round(((game.me.actor ?? { y: 0 }).y * this.TILE_SIZE) - (this.LEVEL_CANVAS.height / 2));
+		// Render tiles and entities
+		var s = new Surface(this.LEVEL_CANVAS.width, this.LEVEL_CANVAS.height, "black");
+		s.blit(this.renderTiles(game.level, game.assets), -cameraX, -cameraY);
+		s.blit(this.renderEntities(game.level, game.entities, game.assets), -cameraX, -cameraY);
 		// Render target
 		var target = game.me.target
 		if (target != null) {
 			var texture = game.assets.getTexture("special", "target_" + (target instanceof Entity ? "entity" : "pos"));
-			s.blit(texture, target.x * this.TILE_SIZE, target.y * this.TILE_SIZE);
+			s.blit(texture, (target.x * this.TILE_SIZE) - cameraX, (target.y * this.TILE_SIZE) - cameraY);
 		}
 		// Render particles
 		var renderedParticles = [...game.particles]
 		game.particles = []
 		for (var particle of renderedParticles) {
-			var newParticles = particle.draw(s)
+			var newParticles = particle.draw(s, cameraX, cameraY)
 			game.particles.push(...newParticles)
 		}
 		// Draw to canvas!
@@ -685,6 +699,19 @@ class Rendering {
 	 * @param {number} y
 	 */
 	static click(game, x, y) {
+		var cameraX = Math.round(((game.me.actor ?? { x: 0 }).x * this.TILE_SIZE) - (this.LEVEL_CANVAS.width / 2));
+		var cameraY = Math.round(((game.me.actor ?? { y: 0 }).y * this.TILE_SIZE) - (this.LEVEL_CANVAS.height / 2));
+		var boardX = Math.floor((x + cameraX) / this.TILE_SIZE);
+		var boardY = Math.floor((y + cameraY) / this.TILE_SIZE);
+		this.clickOnBoard(game, boardX, boardY)
+	}
+	/**
+	 * @param {Game} game
+	 * @param {number} x
+	 * @param {number} y
+	 */
+	static clickOnBoard(game, x, y) {
+		console.log(x, y)
 		if (x < 0 || y < 0 || x >= game.level.length || y >= game.level[0].length) return;
 		var tile = game.level[x][y];
 		if (tile.visibility == 0) return;
