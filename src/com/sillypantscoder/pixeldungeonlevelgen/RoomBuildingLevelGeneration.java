@@ -42,7 +42,7 @@ public class RoomBuildingLevelGeneration {
 				if (x < 0 || y < 0 || x >= l.tiles.length || y >= l.tiles[0].length) continue;
 				if (! (
 					Arrays.asList(replaceables).contains(l.tiles[x][y].state) ||
-					(Arrays.asList(rare_replaceables).contains(l.tiles[x][y].state) && Math.random() < 0.1)
+					(Arrays.asList(rare_replaceables).contains(l.tiles[x][y].state) && Math.random() < 0.05)
 				)) continue;
 				double xDiff = Math.pow(x - cx, 2) / (w * w);
 				double yDiff = Math.pow(y - cy, 2) / (h * h);
@@ -59,10 +59,10 @@ public class RoomBuildingLevelGeneration {
 			String fillTile = "grass_tall";
 			if (i < shortPatches) fillTile = "grass_short";
 			createPatchOval(l, new String[] { "normal" }, new String[] { "door_closed" }, fillTile,
-				Random.randfloat(x - 1.5, x + 1.5),
-				Random.randfloat(x - 1.5, x + 1.5),
-				Random.randfloat(1.5, 3),
-				Random.randfloat(1.5, 3)
+				Random.randfloat(x - 1, x + 1),
+				Random.randfloat(x - 1, x + 1),
+				Random.randfloat(1, 2.5),
+				Random.randfloat(1, 2.5)
 			);
 		}
 	}
@@ -81,7 +81,7 @@ public class RoomBuildingLevelGeneration {
 		// Start with a single starting room and a few doors
 		ArrayList<AbstractRoom> rooms = new ArrayList<AbstractRoom>();
 		{
-			Room startRoom = new Room(new Rect(0, 0, (int)(Random.triangular(3, 8, 9)), (int)(Random.triangular(3, 8, 9))));
+			Room startRoom = new Room(new Rect(0, 0, (int)(Random.triangular(4, 8, 9)), (int)(Random.triangular(4, 8, 9))));
 			rooms.add(startRoom);
 			startRoom.addDoors(getNumberOfDoors.get());
 		}
@@ -185,7 +185,7 @@ public class RoomBuildingLevelGeneration {
 		// Decorations
 		for (AbstractRoom r : rooms) {
 			for (int[] pos : r.getCoveredPositions()) {
-				if (Math.random() < 0.02) {
+				if (Math.random() < 0.06) {
 					createGrassPatch(level, pos[0], pos[1]);
 				}
 			}

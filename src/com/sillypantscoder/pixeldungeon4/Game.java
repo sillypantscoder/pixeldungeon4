@@ -8,6 +8,7 @@ import java.util.Map;
 import com.sillypantscoder.pixeldungeon4.entities.Entity;
 import com.sillypantscoder.pixeldungeon4.entities.LivingEntity;
 import com.sillypantscoder.pixeldungeon4.entities.Monster;
+import com.sillypantscoder.pixeldungeon4.entities.MonsterSpawner;
 import com.sillypantscoder.pixeldungeon4.entities.Player;
 import com.sillypantscoder.pixeldungeon4.entities.TileEntity;
 import com.sillypantscoder.pixeldungeon4.level.Level;
@@ -25,12 +26,7 @@ public class Game {
 		// spawn some rats
 		this.addFreshEntity(this.createMonsterEntity("rat"));
 		this.addFreshEntity(this.createMonsterEntity("rat"));
-		this.addFreshEntity(this.createMonsterEntity("rat"));
-		this.addFreshEntity(this.createMonsterEntity("rat"));
-		this.addFreshEntity(this.createMonsterEntity("rat"));
-		this.addFreshEntity(this.createMonsterEntity("rat"));
-		this.addFreshEntity(this.createMonsterEntity("rat"));
-		this.addFreshEntity(this.createMonsterEntity("rat"));
+		this.addFreshEntity(new MonsterSpawner(this.level.getNewEntityTime()));
 	}
 	public String loginPlayer() {
 		// Get player ID

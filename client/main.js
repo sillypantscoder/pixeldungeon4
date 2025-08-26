@@ -711,7 +711,6 @@ class Rendering {
 	 * @param {number} y
 	 */
 	static clickOnBoard(game, x, y) {
-		console.log(x, y)
 		if (x < 0 || y < 0 || x >= game.level.length || y >= game.level[0].length) return;
 		var tile = game.level[x][y];
 		if (tile.visibility == 0) return;

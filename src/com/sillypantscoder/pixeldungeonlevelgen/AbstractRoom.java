@@ -76,6 +76,6 @@ public abstract class AbstractRoom {
 	}
 	public static AbstractRoom generateOnDoor(Door door) {
 		if (Math.random() < 0.4 && door.canConnectToCorridor) return Corridor.generateOnDoor(door);
-		return Room.generateOnDoor(door, (int)(Random.triangular(3, 7.5, 9)), (int)(Random.triangular(3, 7.5, 9)));
+		return Room.generateOnDoor(door, (int)(Random.triangular(3, 8, 9)), (int)(Random.triangular(3, 8, 9)));
 	}
 }
