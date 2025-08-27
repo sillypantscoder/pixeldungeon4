@@ -5,8 +5,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import com.sillypantscoder.pixeldungeon4.Game;
+import com.sillypantscoder.pixeldungeon4.entities.Dewdrop;
 import com.sillypantscoder.pixeldungeon4.entities.Player;
+import com.sillypantscoder.pixeldungeon4.entities.TileEntity;
 import com.sillypantscoder.utils.JSONObject;
+import com.sillypantscoder.utils.Random;
 import com.sillypantscoder.utils.Utils;
 
 public class TileType {
@@ -79,6 +82,29 @@ public class TileType {
 						x + " " + y
 					});
 				}
+			}
+		} else if (data.getString("type").equals("spawn-entity")) {
+			String entityType = Random.choice(data.getArray("spawn_chances").stream().map((v) -> {
+				if (v instanceof JSONObject o) {
+					if (o.entries_string.containsKey("entity")) {
+						return o.getString("entity");
+					} else return null;
+				} else throw new RuntimeException("Spawn chances object is of the wrong type");
+			}).toList(), data.getArray("spawn_chances").stream().map((v) -> {
+				if (v instanceof JSONObject o) {
+					return o.getNumber("weight");
+				} else throw new RuntimeException("Spawn chances object is of the wrong type");
+			}).toList());
+			// Create entity to spawn
+			if (entityType == null) return;
+			TileEntity e = null;
+			if (entityType.equals("dewdrop")) {
+				e = new Dewdrop(game.level.getNewEntityTime(), x, y);
+			}
+			// Spawn the entity
+			if (e == null) return;
+			else {
+				game.addFreshEntity(e);
 			}
 		} else {
 			System.err.println("Unknown tile action type: " + data.getString("type"));

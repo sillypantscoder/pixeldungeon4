@@ -243,6 +243,9 @@ class AssetManager {
 		if (entity_data.type == "player") {
 			var player = new Player(entity_data.id, entity_data.x, entity_data.y, entity_data.health, entity_data.maxHealth);
 			return player
+		} else if (entity_data.type == "dewdrop") {
+			var dewdrop = new Dewdrop(entity_data.id, entity_data.x, entity_data.y);
+			return dewdrop
 		} else if (Object.keys(this.assets.definitions.monster).includes(entity_data.type)) {
 			var monster = new Monster(entity_data.id, entity_data.type, entity_data.x, entity_data.y, entity_data.health, entity_data.maxHealth)
 			return monster
@@ -375,6 +378,20 @@ class Entity {
 		this.actor.moveFrame(this.x, this.y)
 		return this.actor.sprites.getFrame()
 	}
+}
+class Dewdrop extends Entity {
+	/**
+	 * @param {number} id
+	 * @param {number} x
+	 * @param {number} y
+	 */
+	constructor(id, x, y) {
+		super(id, x, y)
+	}
+	/**
+	 * @returns {string}
+	 */
+	getEntityID() { return "dewdrop"; }
 }
 class LivingEntity extends Entity {
 	/**

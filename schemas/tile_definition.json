@@ -26,6 +26,25 @@
 							"type": { "type": "string", "enum": ["spawn-particles"] },
 							"particle_data": { "type": "string" }
 						}
+					},
+					{
+						"type": "object",
+						"properties": {
+							"type": { "type": "string", "enum": ["spawn-entity"] },
+							"spawn_chances": {
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"entity": { "oneOf": [
+											{ "type": "null" },
+											{ "type": "string" }
+										] },
+										"weight": { "type": "number" }
+									}
+								}
+							}
+						}
 					}
 				]
 			}

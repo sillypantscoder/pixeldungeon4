@@ -10,6 +10,13 @@
 		{
 			"type": "spawn-particles",
 			"particle_data": "grass"
+		},
+		{
+			"type": "spawn-entity",
+			"spawn_chances": [
+				{ "entity": null, "weight": 1 },
+				{ "entity": "dewdrop", "weight": 1 }
+			]
 		}
 	],
 	"onLeave": []

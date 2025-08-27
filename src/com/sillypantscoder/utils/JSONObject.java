@@ -75,10 +75,10 @@ public class JSONObject {
 			data.consume('f'); data.consume('a'); data.consume('l'); data.consume('s'); data.consume('e');
 			this.entries_boolean.put(name, false);
 		}
-		// else if (data.nextChar() == 'n') {
-		// 	data.consume('n'); data.consume('u'); data.consume('l'); data.consume('l');
-		// 	this.entries_null.put(name, null);
-		// }
+		else if (data.nextChar() == 'n') {
+			data.consume('n'); data.consume('u'); data.consume('l'); data.consume('l');
+			// this.entries_null.put(name, null);
+		}
 		else throw new RuntimeException("Unknown value type! Next char: '" + data.nextChar() + "', Data:\n" + data.toString());
 	}
 	public static String readString(Buffer b) {

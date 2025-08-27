@@ -75,6 +75,16 @@ public class Player extends LivingEntity {
 		// Update target
 		this.target = this.target.map((v) -> v.update(level, this.x, this.y));
 		AtomicReference<Optional<Action<?>>> action = new AtomicReference<Optional<Action<?>>>(Optional.empty());
+		// Check for dewdrop collection
+		this.target.ifPresent((v) -> {
+			if (v.getX() == this.x && v.getY() == this.y) {
+				if (v instanceof Dewdrop dewdrop) {
+					this.target = Optional.empty();
+					this.sendMessage.accept(new String[] { "clear_target" });
+					action.set(dewdrop.collect(this));
+				}
+			}
+		});
 		// Check if we are at target
 		if (this.target.map((v) -> {
 			if (v.getX() != this.x) return false;
@@ -94,6 +104,7 @@ public class Player extends LivingEntity {
 			}
 			if (path.length <= 2) {
 				if (v instanceof LivingEntity targetEntity) {
+					// Attack living entity
 					this.target = Optional.empty();
 					this.sendMessage.accept(new String[] { "clear_target" });
 					action.set(Optional.of(new AttackAction(this, targetEntity)));
@@ -118,7 +129,7 @@ public class Player extends LivingEntity {
 		}
 	}
 	public void afterMove(Level level) {
-		if (this.target.map((v) -> (this.x == v.getX()) && (this.y == v.getY())).orElse(false)) {
+		if (this.target.map((v) -> (this.x == v.getX()) && (this.y == v.getY()) && (! (v instanceof TileEntity))).orElse(false)) {
 			// Clear player target
 			this.sendMessage.accept(new String[] { "clear_target" });
 			this.sendMessage.accept(new String[] { "set_animation", String.valueOf(this.id), "idle" });

@@ -1,0 +1,13 @@
+{
+	"$schema": "../../../schemas/entity_spritesheet_definition.json",
+	"tileSize": 16,
+	"initialAnimation": "idle",
+	"animations": {
+		"idle": {
+			"frames": [
+				{ "x": 0, "y": 0 }
+			],
+			"next": "idle"
+		}
+	}
+}

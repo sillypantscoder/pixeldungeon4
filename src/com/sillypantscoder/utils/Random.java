@@ -1,6 +1,6 @@
 package com.sillypantscoder.utils;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -33,8 +33,19 @@ public class Random {
 	public static<T> T choice(T[] items) {
 		return items[randint(0, items.length - 1)];
 	}
-	public static<T> T choice(ArrayList<T> items) {
+	public static<T> T choice(List<T> items) {
 		return items.get(randint(0, items.size() - 1));
+	}
+	public static<T> T choice(List<T> items, List<Double> weights) {
+		if (items.size() != weights.size()) throw new IllegalArgumentException("Items and weights must be the same size");
+		double totalWeight = weights.stream().mapToDouble(Double::doubleValue).sum();
+		double r = randfloat(0, totalWeight);
+		double cumulativeWeight = 0;
+		for (int i = 0; i < items.size(); i++) {
+			cumulativeWeight += weights.get(i);
+			if (r <= cumulativeWeight) return items.get(i);
+		}
+		return items.get(items.size() - 1);
 	}
 	public static<T> T[] shuffle(T[] items) {
 		for (int i = 0; i < items.length; i++) {
