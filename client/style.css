@@ -1,7 +1,28 @@
+@font-face {
+	font-family: 'PixelDungeon';
+	src: url('/font.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+}
+
 body {
 	margin: 0;
 	background: black;
 	overflow: hidden;
+	/* Font! */
+	font-family: PixelDungeon;
+	color: white;
+	text-shadow:
+		/* Orthogonal */
+		0em -0.05em black,
+		0em 0.05em black,
+		-0.05em 0em black,
+		0.05em 0em black,
+		/* Diagonal */
+		-0.05em -0.05em black,
+		-0.05em 0.05em black,
+		0.05em -0.05em black,
+		0.05em 0.05em black;
 }
 canvas {
 	image-rendering: optimizeSpeed;             /* STOP SMOOTHING, GIVE ME SPEED  */
@@ -11,4 +32,50 @@ canvas {
 	image-rendering: pixelated;                 /* Universal support since 2021   */
 	image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
 	-ms-interpolation-mode: nearest-neighbor;   /* IE8+                           */
+}
+.menu {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+.menu > aside {
+	border-style: solid;
+	border-width: 1em;
+	border-image: url(/ui_textures/menu.png) 33.33333%;
+	padding: 0.3em;
+	position: relative;
+}
+.menu > aside::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: #3b3e36;
+	z-index: 0;
+}
+.menu > aside > * {
+	position: relative;
+	z-index: 1;
+}
+span:has( > button) {
+	border-style: solid;
+	border-width: 0.3em;
+	/* data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2IDYiPjxwYXRoIGQ9Ik0gMSAwIEwgNSAwIEwgNSAxIEwgMSAxIEwgMSA0IEwgMCA0IEwgMCAxIEwgMSAxIFoiIGZpbGw9IiNkYjRmMzUiPjwvcGF0aD48cGF0aCBkPSJNIDEgMSBMIDIgMSBMIDIgMiBMIDEgMiBaIE0gMCA0IEwgMSA0IEwgMSA1IEwgMCA1IFoiIGZpbGw9IiNjNzNkMzAiPjwvcGF0aD48cGF0aCBkPSJNIDEgMiBMIDIgMiBMIDIgMSBMIDQgMSBMIDQgMiBMIDUgMiBMIDUgNCBMIDQgNCBMIDQgNSBMIDIgNSBMIDIgNCBMIDEgNCBaIiBmaWxsPSIjYjIyYTJhIj48L3BhdGg+PHBhdGggZD0iTSA0IDEgTCA1IDEgTCA1IDIgTCA0IDIgWiIgZmlsbD0iI2JiMzIyYyI+PC9wYXRoPjxwYXRoIGQ9Ik0gMSA0IEwgMiA0IEwgMiA1IEwgMSA1IFoiIGZpbGw9IiNhOTI4MmEiPjwvcGF0aD48cGF0aCBkPSJNIDUgMSBMIDYgMSBMIDYgMiBMIDUgMiBaIE0gNCA0IEwgNSA0IEwgNSA1IEwgNCA1IFoiIGZpbGw9IiM5YzIzMmIiPjwvcGF0aD48cGF0aCBkPSJNIDUgMiBMIDYgMiBMIDYgNSBMIDUgNSBMIDUgNiBMIDEgNiBMIDEgNSBMIDUgNSBaIiBmaWxsPSIjODYxYzJkIj48L3BhdGg+PC9zdmc+ */
+	border-image: url(/ui_textures/button.png) 33.33333%;
+}
+button {
+	font-family: inherit;
+	color: inherit;
+	text-shadow: inherit;
+	border: none;
+	background: #b22a2a;
+	padding: 0.1em;
+	font-size: 1em;
 }

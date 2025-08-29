@@ -554,6 +554,40 @@ class GrassParticle extends Particle {
 	}
 }
 
+class Menu {
+	constructor() {
+		this.overlayElement = document.createElement("div")
+		this.overlayElement.classList.add("menu");
+		this.element = this.overlayElement.appendChild(document.createElement("aside"))
+		// Overlay setup
+		this.overlayElement.addEventListener("click", ((/** @type {Event} */ e) => {
+			if (e.target == e.currentTarget) {
+				this.remove();
+			}
+		}).bind(this));
+	}
+	remove() {
+		this.overlayElement.remove();
+	}
+	/**
+	 * @param {Menu} menu
+	 */
+	static show(menu) {
+		document.body.appendChild(menu.overlayElement);
+	}
+}
+class DummyMenu extends Menu {
+	constructor() {
+		super()
+		this.element.appendChild(document.createElement("div")).innerText = "Some information goes here"
+		this.element.appendChild(document.createElement("span")).innerHTML = "<button>Agggg AAAAA AAAgg, AAA!</button>"
+		this.element.appendChild(document.createElement("div")).innerText = "ABCDEFGHIJKLMNOPQRSTUVWXYZ."
+		this.element.appendChild(document.createElement("div")).innerText = "abcdefghijklmnopqrstuvwxyz!"
+		this.element.appendChild(document.createElement("div")).innerText = "0123456789, \"ABC.\""
+	}
+}
+Menu.show(new DummyMenu())
+
 /** @typedef {{ state: string, visibility: 0 | 1 | 2 }} TileState */
 class Game {
 	/** @param {Main} main */

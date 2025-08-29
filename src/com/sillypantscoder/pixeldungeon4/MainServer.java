@@ -1,5 +1,6 @@
 package com.sillypantscoder.pixeldungeon4;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,6 +22,13 @@ public class MainServer extends HttpServer.RequestHandler {
 		if (path.equals("/graphics.js")) return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/javascript").setBody(Utils.readFile("client/graphics.js"));
 		if (path.equals("/zip.min.js")) return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/javascript; charset=utf-8").setBody(Utils.readFile("client/zip.min.js"));
 		if (path.equals("/main.js")) return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/javascript").setBody(Utils.readFile("client/main.js"));
+		if (path.equals("/font.ttf")) return new HttpResponse().setStatus(200).addHeader("Content-Type", "font/ttf").setBody(Utils.readFileBinary(new File("font.ttf")));
+		if (path.startsWith("/ui_textures/")) {
+			File f = new File("data/textures/ui/" + path.split("/")[2]);
+			if (f.isFile()) {
+				return new HttpResponse().setStatus(200).addHeader("Content-Type", "image/png").setBody(Utils.readFileBinary(f));
+			}
+		}
 		if (path.startsWith("/get_messages/")) {
 			String playerID = path.split("/")[2];
 			if (! game.players.containsKey(playerID)) return new HttpResponse().setStatus(400).setBody("That player is not logged in");
