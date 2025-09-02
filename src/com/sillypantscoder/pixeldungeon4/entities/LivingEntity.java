@@ -1,5 +1,7 @@
 package com.sillypantscoder.pixeldungeon4.entities;
 
+import com.sillypantscoder.pixeldungeon4.Game;
+import com.sillypantscoder.pixeldungeon4.items.Item;
 import com.sillypantscoder.utils.JSONObject;
 
 public abstract class LivingEntity extends TileEntity {
@@ -11,6 +13,9 @@ public abstract class LivingEntity extends TileEntity {
 		this.maxHealth = health;
 	}
 	public abstract int getDamage();
+	public void onDeath(Game game) {
+		game.addFreshEntity(new DroppedItem(game.level.getNewEntityTime(), x, y, new Item("food")));
+	}
 	public JSONObject serialize() {
 		JSONObject obj = super.serialize();
 		obj.set("health", this.health);

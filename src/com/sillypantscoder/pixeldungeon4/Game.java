@@ -63,9 +63,11 @@ public class Game {
 		HashMap<String, byte[]> data = new HashMap<String, byte[]>();
 		for (String folder_name : new String[] {
 			"data/definitions/entity_spritesheets",
+			"data/definitions/item",
 			"data/definitions/monster",
 			"data/definitions/tile",
 			"data/textures/entity",
+			"data/textures/item",
 			"data/textures/special",
 			"data/textures/tile"
 		}) {
@@ -119,6 +121,8 @@ public class Game {
 	}
 	public void updateEntityHealth(LivingEntity e) {
 		if (e.health <= 0) {
+			// Entity on death trigger
+			e.onDeath(this);
 			// Send entity death to clients
 			for (Player player : allPlayers()) {
 				if (player == e || level.isLocVisible(player.x, player.y, e.x, e.y)) {

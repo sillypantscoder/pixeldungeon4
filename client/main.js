@@ -154,22 +154,26 @@ class Utils {
  * @typedef {{ collisionType: "none" | "normal" | "wall", canSeeThrough: boolean }} TileDefinition
  * @typedef {{ tileSize: number, initialAnimation: string, animations: Object<string, { frames: { x: number, y: number }[], next: string }> }} EntitySpritesheetDefinition
  * @typedef {{ }} MonsterDefinition
+ * @typedef {{ name: string, description: string, buttons: { name: string }[] }} ItemDefinition
  */
 class AssetManager {
 	constructor() {
 		/**
-		 * @type {{ definitions: { tile: Object<string, TileDefinition>, monster: Object<string, MonsterDefinition>, entity_spritesheets: Object<string, EntitySpritesheetDefinition> }, textures: Object<string, Object<string, { normal: Surface, dark: Surface }>> }}
+		 * @type {{ definitions: { tile: Object<string, TileDefinition>, monster: Object<string, MonsterDefinition>, entity_spritesheets: Object<string, EntitySpritesheetDefinition>, item: Object<string, ItemDefinition> }, textures: Object<string, Object<string, { normal: Surface, dark: Surface }>> }}
 		 */
 		this.assets = {
 			"definitions": {
 				"entity_spritesheets": {},
 				"monster": {},
-				"tile": {}
+				"tile": {},
+				"item": {}
 			},
 			"textures": {
 				"entity": {},
+				"item": {},
 				"special": {},
-				"tile": {}
+				"tile": {},
+				"ui": {}
 			}
 		}
 	}
@@ -202,6 +206,9 @@ class AssetManager {
 				} else if (filename[1] == "tile") {
 					const decoder = new TextDecoder('utf-8')
 					this.assets.definitions.tile[filename[2]] = JSON.parse(decoder.decode(fileData))
+				} else if (filename[1] == "item") {
+					const decoder = new TextDecoder('utf-8')
+					this.assets.definitions.item[filename[2]] = JSON.parse(decoder.decode(fileData))
 				} else {
 					console.error("Unknown definition type for filename:", _filename, fileData)
 				}
@@ -236,7 +243,7 @@ class AssetManager {
 		return this.assets.definitions.monster[id]
 	}
 	/**
-	 * @param {{ type: string} & Object<string, any>} entity_data
+	 * @param {{ type: string } & Object<string, any>} entity_data
 	 * @returns {Entity}
 	 */
 	deserializeEntity(entity_data) {
@@ -246,6 +253,10 @@ class AssetManager {
 		} else if (entity_data.type == "dewdrop") {
 			var dewdrop = new Dewdrop(entity_data.id, entity_data.x, entity_data.y);
 			return dewdrop
+		} else if (entity_data.type == "item") {
+			var item = Item.create(entity_data.item);
+			var item_entity = new DroppedItem(entity_data.id, entity_data.x, entity_data.y, item);
+			return item_entity;
 		} else if (Object.keys(this.assets.definitions.monster).includes(entity_data.type)) {
 			var monster = new Monster(entity_data.id, entity_data.type, entity_data.x, entity_data.y, entity_data.health, entity_data.maxHealth)
 			return monster
@@ -303,6 +314,32 @@ class SpritesheetDisplay {
 		var image = this.surfaces[`${image_pos.x},${image_pos.y}`]
 		if (this.flipped) return image.flipHorizontally()
 		else return image
+	}
+}
+
+class Item {
+	/**
+	 * @param {string} id
+	 */
+	constructor(id) {
+		this.id = id;
+	}
+	/**
+	 * @param {AssetManager} assets
+	 */
+	createSpritesheet(assets) {
+		return new SpritesheetDisplay(assets.getTexture("item", this.id), 16, {
+			"idle": {
+				"frames": [ { x: 0, y: 0 } ],
+				"next": "idle"
+			}
+		}, "idle")
+	}
+	/**
+	 * @param {any} data
+	 */
+	static create(data) {
+		return new Item(data.id)
 	}
 }
 
@@ -369,9 +406,15 @@ class Entity {
 	/**
 	 * @param {AssetManager} assets
 	 */
+	createActor(assets) {
+		return Actor.createForEntityID(this.getEntityID(), assets, this.x, this.y)
+	}
+	/**
+	 * @param {AssetManager} assets
+	 */
 	getNextFrame(assets) {
 		if (this.actor == null) {
-			this.actor = Actor.createForEntityID(this.getEntityID(), assets, this.x, this.y)
+			this.actor = this.createActor(assets)
 		} else {
 			this.actor.sprites.nextFrame()
 		}
@@ -392,6 +435,30 @@ class Dewdrop extends Entity {
 	 * @returns {string}
 	 */
 	getEntityID() { return "dewdrop"; }
+}
+class DroppedItem extends Entity {
+	/**
+	 * @param {number} id
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {Item} item
+	 */
+	constructor(id, x, y, item) {
+		super(id, x, y)
+		this.item = item;
+	}
+	/**
+	 * @returns {string}
+	 */
+	getEntityID() { return "item"; }
+	/**
+	 * @param {AssetManager} assets
+	 */
+	createActor(assets) {
+		var sprites = this.item.createSpritesheet(assets);
+		var actor = new Actor(sprites, this.x, this.y);
+		return actor;
+	}
 }
 class LivingEntity extends Entity {
 	/**

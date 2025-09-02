@@ -75,13 +75,18 @@ public class Player extends LivingEntity {
 		// Update target
 		this.target = this.target.map((v) -> v.update(level, this.x, this.y));
 		AtomicReference<Optional<Action<?>>> action = new AtomicReference<Optional<Action<?>>>(Optional.empty());
-		// Check for dewdrop collection
+		// Check for target entity interaction
 		this.target.ifPresent((v) -> {
 			if (v.getX() == this.x && v.getY() == this.y) {
 				if (v instanceof Dewdrop dewdrop) {
 					this.target = Optional.empty();
 					this.sendMessage.accept(new String[] { "clear_target" });
 					action.set(dewdrop.collect(this));
+				}
+				if (v instanceof DroppedItem item) {
+					this.target = Optional.empty();
+					this.sendMessage.accept(new String[] { "clear_target" });
+					action.set(item.collect(this));
 				}
 			}
 		});

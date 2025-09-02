@@ -39,7 +39,10 @@ public abstract class NumberProvider {
 		public Variable(String name) {
 			this.name = name;
 		}
-		public double get(MonsterSituation situation) { return situation.get(this.name); }
+		public double get(MonsterSituation situation) {
+			if (situation == null) throw new RuntimeException("Can't get variable '" + this.name + "' because there is no situation to read from");
+			return situation.get(this.name);
+		}
 	}
 	public static class NPMath extends NumberProvider {
 		public MathOperation operation;
