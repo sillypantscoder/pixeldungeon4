@@ -16,8 +16,8 @@ public class DroppedItem extends TileEntity {
 		this.item = item;
 	}
 	public String getTypeID() { return "item"; }
-	public JSONObject serialize() {
-		JSONObject obj = super.serialize();
+	public JSONObject serialize(boolean allDetails) {
+		JSONObject obj = super.serialize(allDetails);
 		obj.setObject("item", item.serialize());
 		return obj;
 	}
@@ -47,7 +47,18 @@ public class DroppedItem extends TileEntity {
 			}
 			game.level.entities.remove(this.item);
 			// Add to inventory
-			// TODO: Add item to entity's inventory
+			if (this.entity instanceof Player targetPlayer) {
+				targetPlayer.inventory.add(this.item.item);
+				targetPlayer.sendInventory();
+			} else {
+				// Drop previous hand item
+				this.entity.mainHand.ifPresent((v) -> {
+					DroppedItem fromHand = new DroppedItem(game.level.getNewEntityTime(), this.entity.x, this.entity.y, v);
+					game.addFreshEntity(fromHand);
+				});
+				// Set new hand item.
+				this.entity.mainHand = Optional.of(this.item.item);
+			}
 			// Send animation to clients
 			for (Player player : game.allPlayers()) {
 				if (game.level.isLocVisible(player.x, player.y, this.entity.x, this.entity.y)) {

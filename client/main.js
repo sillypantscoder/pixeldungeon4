@@ -248,7 +248,7 @@ class AssetManager {
 	 */
 	deserializeEntity(entity_data) {
 		if (entity_data.type == "player") {
-			var player = new Player(entity_data.id, entity_data.x, entity_data.y, entity_data.health, entity_data.maxHealth);
+			var player = new Player(entity_data.id, entity_data.x, entity_data.y, entity_data.health, entity_data.maxHealth, entity_data.mainHand.id == false ? null : Item.create(entity_data.mainHand), entity_data.inventory);
 			return player
 		} else if (entity_data.type == "dewdrop") {
 			var dewdrop = new Dewdrop(entity_data.id, entity_data.x, entity_data.y);
@@ -258,7 +258,7 @@ class AssetManager {
 			var item_entity = new DroppedItem(entity_data.id, entity_data.x, entity_data.y, item);
 			return item_entity;
 		} else if (Object.keys(this.assets.definitions.monster).includes(entity_data.type)) {
-			var monster = new Monster(entity_data.id, entity_data.type, entity_data.x, entity_data.y, entity_data.health, entity_data.maxHealth)
+			var monster = new Monster(entity_data.id, entity_data.type, entity_data.x, entity_data.y, entity_data.health, entity_data.maxHealth, entity_data.mainHand.id == false ? null : Item.create(entity_data.mainHand))
 			return monster
 		}
 		throw new Error("Entity type not found: " + JSON.stringify(entity_data))
@@ -467,11 +467,13 @@ class LivingEntity extends Entity {
 	 * @param {number} y
 	 * @param {number} health
 	 * @param {number} maxHealth
+	 * @param {Item | null} mainHand
 	 */
-	constructor(id, x, y, health, maxHealth) {
+	constructor(id, x, y, health, maxHealth, mainHand) {
 		super(id, x, y)
 		this.health = health
 		this.maxHealth = maxHealth
+		this.mainHand = mainHand
 	}
 }
 class Player extends LivingEntity {
@@ -481,11 +483,14 @@ class Player extends LivingEntity {
 	 * @param {number} y
 	 * @param {number} health
 	 * @param {number} maxHealth
+	 * @param {Item | null} mainHand
+	 * @param {Item[]} inventory
 	 */
-	constructor(id, x, y, health, maxHealth) {
-		super(id, x, y, health, maxHealth)
+	constructor(id, x, y, health, maxHealth, mainHand, inventory) {
+		super(id, x, y, health, maxHealth, mainHand)
 		/** @type {null | Entity | { x: number, y: number }} */
 		this.target = null
+		this.inventory = inventory
 	}
 	getEntityID() { return "player" }
 	/**
@@ -511,9 +516,10 @@ class Monster extends LivingEntity {
 	 * @param {number} y
 	 * @param {number} health
 	 * @param {number} maxHealth
+	 * @param {Item | null} mainHand
 	 */
-	constructor(id, typeID, x, y, health, maxHealth) {
-		super(id, x, y, health, maxHealth)
+	constructor(id, typeID, x, y, health, maxHealth, mainHand) {
+		super(id, x, y, health, maxHealth, mainHand)
 		this.typeID = typeID
 		/** @type {null | Entity | { x: number, y: number }} */
 		this.target = null
@@ -666,7 +672,7 @@ class Game {
 		this.entities = []
 		/** @type {Particle[]} */
 		this.particles = []
-		this.me = new Player(0, 0, 0, 0, 0);
+		this.me = new Player(0, 0, 0, 0, 0, null, []);
 		this.assets = new AssetManager()
 	}
 	/**
@@ -989,6 +995,13 @@ class Main {
 				this.game.particles.push(entity_particle)
 			}
 			this.game.entities.splice(this.game.entities.indexOf(entity), 1)
+		} else if (message[0] == "set_inventory") {
+			/** @type {Item[]} */
+			var inventory = this.game.me.inventory = []
+			for (var i = 1; i < message.length; i++) {
+				var item = Item.create(JSON.parse(message[i]))
+				inventory.push(item)
+			}
 		} else {
 			console.log("Unknown message!", message)
 		}

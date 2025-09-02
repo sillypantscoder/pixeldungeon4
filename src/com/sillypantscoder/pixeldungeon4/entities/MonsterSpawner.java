@@ -37,7 +37,7 @@ public class MonsterSpawner extends Entity {
 					p.visibleEntities.add(newEntity);
 					String[] data = new String[] {
 						"create_entity",
-						newEntity.serialize().toString()
+						newEntity.serialize(false).toString()
 					};
 					p.sendMessage.accept(data);
 				}

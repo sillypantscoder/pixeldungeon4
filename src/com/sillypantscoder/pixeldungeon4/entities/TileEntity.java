@@ -15,7 +15,7 @@ public abstract class TileEntity extends Entity implements PathfindingTarget {
 	}
 	public int getX() { return this.x; }
 	public int getY() { return this.y; }
-	public JSONObject serialize() {
+	public JSONObject serialize(boolean allDetails) {
 		JSONObject obj = new JSONObject();
 		obj.setNumber("id", this.id);
 		obj.setString("type", this.getTypeID());

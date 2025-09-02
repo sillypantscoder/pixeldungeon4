@@ -8,7 +8,9 @@ import java.util.function.Consumer;
 import com.sillypantscoder.pixeldungeon4.actions.Action;
 import com.sillypantscoder.pixeldungeon4.actions.AttackAction;
 import com.sillypantscoder.pixeldungeon4.actions.MoveAction;
+import com.sillypantscoder.pixeldungeon4.items.Item;
 import com.sillypantscoder.pixeldungeon4.level.Level;
+import com.sillypantscoder.utils.JSONObject;
 import com.sillypantscoder.utils.Random;
 
 public class Player extends LivingEntity {
@@ -17,6 +19,7 @@ public class Player extends LivingEntity {
 	public Consumer<String[]> sendMessage;
 	public ArrayList<TileEntity> visibleEntities;
 	public int healingTime;
+	public ArrayList<Item> inventory;
 	public Player(String playerID, int time, int x, int y, Consumer<String[]> sendMessage) {
 		super(time, x, y, 20);
 		this.playerID = playerID;
@@ -24,6 +27,7 @@ public class Player extends LivingEntity {
 		this.sendMessage = sendMessage;
 		this.visibleEntities = new ArrayList<TileEntity>();
 		this.healingTime = time + 10;
+		this.inventory = new ArrayList<Item>();
 	}
 	public String getTypeID() { return "player"; }
 	public void sendVision(Level level) {
@@ -46,7 +50,7 @@ public class Player extends LivingEntity {
 						this.visibleEntities.add(tileEntity);
 						String[] data = new String[] {
 							"create_entity",
-							tileEntity.serialize().toString()
+							tileEntity.serialize(false).toString()
 						};
 						this.sendMessage.accept(data);
 					}
@@ -63,6 +67,15 @@ public class Player extends LivingEntity {
 				}
 			}
 		}
+	}
+	public void sendInventory() {
+		ArrayList<String> inv = new ArrayList<String>();
+		inv.add("set_inventory");
+		for (int i = 0; i < this.inventory.size(); i++) {
+			Item item = this.inventory.get(i);
+			inv.add(item.serialize().toString());
+		}
+		this.sendMessage.accept(inv.toArray(new String[0]));
 	}
 	public Optional<Action<?>> getAction(Level level) {
 		// Healing
@@ -143,4 +156,14 @@ public class Player extends LivingEntity {
 		this.sendVision(level);
 	}
 	public int getDamage() { return Random.randint(1, 5); }
+	public ArrayList<Item> getAllInventoryItems() {
+		ArrayList<Item> items = super.getAllInventoryItems();
+		items.addAll(this.inventory);
+		return items;
+	}
+	public JSONObject serialize(boolean allDetails) {
+		JSONObject obj = super.serialize(allDetails);
+		if (allDetails) obj.setArray("inventory", new ArrayList<Object>(this.inventory.stream().map((v) -> v.serialize()).toList()));
+		return obj;
+	}
 }

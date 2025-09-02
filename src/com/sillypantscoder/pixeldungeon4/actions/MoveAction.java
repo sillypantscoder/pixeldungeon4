@@ -37,7 +37,7 @@ public class MoveAction extends Action<TileEntity> {
 					player.visibleEntities.add(this.entity);
 					String[] data = new String[] {
 						"create_entity",
-						this.entity.serialize().toString()
+						this.entity.serialize(false).toString()
 					};
 					player.sendMessage.accept(data);
 				}

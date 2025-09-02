@@ -104,7 +104,7 @@ public class Game {
 				// Send message!
 				String[] data = new String[] {
 					"create_entity",
-					tileEntity.serialize().toString()
+					tileEntity.serialize(p == e).toString()
 				};
 				p.sendMessage.accept(data);
 			}
