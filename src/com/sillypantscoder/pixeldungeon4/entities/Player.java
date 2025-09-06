@@ -50,7 +50,7 @@ public class Player extends LivingEntity {
 						this.visibleEntities.add(tileEntity);
 						String[] data = new String[] {
 							"create_entity",
-							tileEntity.serialize(false).toString()
+							tileEntity.serialize(this == e).toString()
 						};
 						this.sendMessage.accept(data);
 					}
@@ -80,7 +80,7 @@ public class Player extends LivingEntity {
 	public Optional<Action<?>> getAction(Level level) {
 		// Healing
 		if (this.time >= this.healingTime) {
-			this.healingTime += 128;
+			this.healingTime += 192;
 			this.health += 1;
 			if (this.health > this.maxHealth) this.health = this.maxHealth;
 			level.updateEntityHealth.accept(this);

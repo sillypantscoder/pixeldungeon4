@@ -248,7 +248,7 @@ class AssetManager {
 	 */
 	deserializeEntity(entity_data) {
 		if (entity_data.type == "player") {
-			var player = new Player(entity_data.id, entity_data.x, entity_data.y, entity_data.health, entity_data.maxHealth, entity_data.mainHand.id == false ? null : Item.create(entity_data.mainHand), entity_data.inventory);
+			var player = new Player(entity_data.id, entity_data.x, entity_data.y, entity_data.health, entity_data.maxHealth, (entity_data.mainHand == undefined || entity_data.mainHand.id == false) ? null : Item.create(entity_data.mainHand), entity_data.inventory);
 			return player
 		} else if (entity_data.type == "dewdrop") {
 			var dewdrop = new Dewdrop(entity_data.id, entity_data.x, entity_data.y);
@@ -258,7 +258,7 @@ class AssetManager {
 			var item_entity = new DroppedItem(entity_data.id, entity_data.x, entity_data.y, item);
 			return item_entity;
 		} else if (Object.keys(this.assets.definitions.monster).includes(entity_data.type)) {
-			var monster = new Monster(entity_data.id, entity_data.type, entity_data.x, entity_data.y, entity_data.health, entity_data.maxHealth, entity_data.mainHand.id == false ? null : Item.create(entity_data.mainHand))
+			var monster = new Monster(entity_data.id, entity_data.type, entity_data.x, entity_data.y, entity_data.health, entity_data.maxHealth, (entity_data.mainHand == undefined || entity_data.mainHand.id == false) ? null : Item.create(entity_data.mainHand))
 			return monster
 		}
 		throw new Error("Entity type not found: " + JSON.stringify(entity_data))
@@ -652,11 +652,40 @@ class Menu {
 class DummyMenu extends Menu {
 	constructor() {
 		super()
-		this.element.appendChild(document.createElement("div")).innerText = "Some information goes here"
+		this.element.appendChild(document.createElement("div")).innerText = "This is some information about the game! But there's not really anything super informative I can say here, "+
+			"so the remainder of this dialog box will be used to test out the font."
 		this.element.appendChild(document.createElement("span")).innerHTML = "<button>Agggg AAAAA AAAgg, AAA!</button>"
 		this.element.appendChild(document.createElement("div")).innerText = "ABCDEFGHIJKLMNOPQRSTUVWXYZ."
 		this.element.appendChild(document.createElement("div")).innerText = "abcdefghijklmnopqrstuvwxyz!"
 		this.element.appendChild(document.createElement("div")).innerText = "0123456789, \"ABC.\""
+	}
+}
+class InventoryMenu extends Menu {
+	/**
+	 * @param {AssetManager} assets
+	 * @param {Player} player
+	 */
+	constructor(assets, player) {
+		super()
+		this.player = player
+		// Create header
+		this.element.appendChild(document.createElement("h3")).innerText = "Inventory"
+		// Create grid
+		this.grid = this.element.appendChild(document.createElement("div"))
+		for (var i = 0; i < player.inventory.length; i++) {
+			let item = player.inventory[i]
+			let e = this.grid.appendChild(document.createElement("button"))
+			// Format grid cell
+			e.setAttribute("style", "display: inline-block; width: 2em; height: 2em; margin: 0.2em; padding: 0.2em; background: #FFF3; line-height: 0;")
+			// Set button icon
+			let icon_data = item.createSpritesheet(assets).getFrame().toDataURL()
+			icon_data.then((v) => {
+				var img = e.appendChild(document.createElement("img"))
+				img.setAttribute("src", v)
+				img.setAttribute("style", "width: 100%; height: auto;")
+			})
+			// TODO: Click handler
+		}
 	}
 }
 Menu.show(new DummyMenu())

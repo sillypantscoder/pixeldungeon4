@@ -111,7 +111,7 @@ public class Game {
 		}
 	}
 	public void doEntityTurns() {
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < 64; i++) {
 			boolean canContinue = this.level.doEntityTurn(this);
 			if (! canContinue) break;
 		}

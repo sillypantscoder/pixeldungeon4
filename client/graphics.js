@@ -87,6 +87,16 @@ class Surface {
 		flipped.context.setTransform(1, 0, 0, 1, 0, 0) // Reset transformation matrix
 		return flipped
 	}
+	async toDataURL() {
+		var blob = await this.canvas.convertToBlob()
+		/** @type {string} */
+		var data = await new Promise((resolve) => {
+			var reader = new FileReader()
+			reader.addEventListener("loadend", () => resolve((reader.result ?? "[Error converting Surface to data URL]").toString()))
+			reader.readAsDataURL(blob)
+		})
+		return data;
+	}
 	/**
 	 * @param {ArrayBuffer} arrayBuffer
 	 * @returns {Promise<Surface>}

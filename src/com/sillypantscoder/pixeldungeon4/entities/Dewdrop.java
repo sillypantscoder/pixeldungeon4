@@ -38,7 +38,7 @@ public class Dewdrop extends TileEntity {
 			}
 			game.level.entities.remove(this.dewdrop);
 			// Heal entity
-			this.entity.health += 1;
+			this.entity.health += 2;
 			if (this.entity.health > this.entity.maxHealth) this.entity.health = this.entity.maxHealth;
 			game.updateEntityHealth(this.entity);
 			// Send animation to clients

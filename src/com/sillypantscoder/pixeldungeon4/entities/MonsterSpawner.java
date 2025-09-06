@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import com.sillypantscoder.pixeldungeon4.Game;
 import com.sillypantscoder.pixeldungeon4.actions.Action;
+import com.sillypantscoder.pixeldungeon4.actions.WaitAction;
 import com.sillypantscoder.pixeldungeon4.level.Level;
 
 public class MonsterSpawner extends Entity {
@@ -14,6 +15,12 @@ public class MonsterSpawner extends Entity {
 		return "monster_spawner";
 	}
 	public Optional<Action<?>> getAction(Level level) {
+		long numberOfEntities = level.entities.stream().filter((v) -> v instanceof TileEntity).count();
+		if (Math.random() * 64 < numberOfEntities) {
+			WaitAction action = new WaitAction(this);
+			action.time = 128;
+			return Optional.of(action);
+		}
 		return Optional.of(new SpawnMonster(this, "rat"));
 	}
 	public static class SpawnMonster extends Action<MonsterSpawner> {
