@@ -15,9 +15,19 @@
 						"items": {
 							"oneOf": [
 								{ "type": "object", "properties": {
-									"type": { "type": "string", "enum": ["change_health"] },
+									"type": { "type": "string", "enum": ["consume-item"] }
+								}, "required": ["type"] },
+								{ "type": "object", "properties": {
+									"type": { "type": "string", "enum": ["drop-item"] }
+								}, "required": ["type"] },
+								{ "type": "object", "properties": {
+									"type": { "type": "string", "enum": ["change-time", "change-health"] },
 									"amount": { "$ref": "definitions.json#/properties/number_provider" }
-								}, "required": ["type", "amount"] }
+								}, "required": ["type", "amount"] },
+								{ "type": "object", "properties": {
+									"type": { "type": "string", "enum": ["set-animation"] },
+									"animation": { "type": "string" }
+								}, "required": ["type", "animation"] }
 							]
 						}
 					}

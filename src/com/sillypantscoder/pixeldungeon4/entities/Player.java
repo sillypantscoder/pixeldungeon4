@@ -69,6 +69,12 @@ public class Player extends LivingEntity {
 		}
 	}
 	public void sendInventory() {
+		// Main hand
+		this.sendMessage.accept(new String[] {
+			"set_main_hand",
+			this.mainHand.map((v) -> v.serialize().toString()).orElse("")
+		});
+		// Inventory
 		ArrayList<String> inv = new ArrayList<String>();
 		inv.add("set_inventory");
 		for (int i = 0; i < this.inventory.size(); i++) {

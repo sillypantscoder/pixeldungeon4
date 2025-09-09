@@ -154,7 +154,7 @@ class Utils {
  * @typedef {{ collisionType: "none" | "normal" | "wall", canSeeThrough: boolean }} TileDefinition
  * @typedef {{ tileSize: number, initialAnimation: string, animations: Object<string, { frames: { x: number, y: number }[], next: string }> }} EntitySpritesheetDefinition
  * @typedef {{ }} MonsterDefinition
- * @typedef {{ name: string, description: string, buttons: { name: string }[] }} ItemDefinition
+ * @typedef {{ name: string, description: string }} ItemDefinition
  */
 class AssetManager {
 	constructor() {
@@ -243,6 +243,13 @@ class AssetManager {
 		return this.assets.definitions.monster[id]
 	}
 	/**
+	 * @param {string} id
+	 * @returns {ItemDefinition | undefined}
+	 */
+	getItemDefinition(id) {
+		return this.assets.definitions.item[id]
+	}
+	/**
 	 * @param {{ type: string } & Object<string, any>} entity_data
 	 * @returns {Entity}
 	 */
@@ -320,9 +327,11 @@ class SpritesheetDisplay {
 class Item {
 	/**
 	 * @param {string} id
+	 * @param {{ name: string }[]} buttons
 	 */
-	constructor(id) {
+	constructor(id, buttons) {
 		this.id = id;
+		this.buttons = buttons
 	}
 	/**
 	 * @param {AssetManager} assets
@@ -339,7 +348,7 @@ class Item {
 	 * @param {any} data
 	 */
 	static create(data) {
-		return new Item(data.id)
+		return new Item(data.id, data.buttons)
 	}
 }
 
@@ -663,11 +672,15 @@ class DummyMenu extends Menu {
 class InventoryMenu extends Menu {
 	/**
 	 * @param {AssetManager} assets
+	 * @param {string} clientID
 	 * @param {Player} player
+	 * @param {() => void} getMessagesFromServer
 	 */
-	constructor(assets, player) {
+	constructor(assets, clientID, player, getMessagesFromServer) {
 		super()
+		this.clientID = clientID
 		this.player = player
+		this.getMessagesFromServer = getMessagesFromServer
 		// Create header
 		this.element.appendChild(document.createElement("h3")).innerText = "Inventory"
 		// Create grid
@@ -684,7 +697,63 @@ class InventoryMenu extends Menu {
 				img.setAttribute("src", v)
 				img.setAttribute("style", "width: 100%; height: auto;")
 			})
-			// TODO: Click handler
+			// Click handler
+			e.addEventListener("click", (() => {
+				Menu.show(new InventoryItemMenu(assets, this, item))
+			}).bind(this))
+		}
+	}
+}
+class InventoryItemMenu extends Menu {
+	/**
+	 * @param {AssetManager} assets
+	 * @param {InventoryMenu} parent
+	 * @param {Item} item
+	 */
+	constructor(assets, parent, item) {
+		super()
+		this.parent = parent
+		this.item = item
+		var itemData = assets.getItemDefinition(item.id)
+		if (itemData == null) throw new Error("Item with id '" + this.item.id + "' does not exist")
+		this.itemData = itemData
+		// Create header
+		var header = this.element.appendChild(document.createElement("h3"))
+		header.innerText = " " + this.itemData.name
+		// Create icon
+		let icon_data = item.createSpritesheet(assets).getFrame().toDataURL()
+		icon_data.then((v) => {
+			var img = document.createElement("img")
+			img.setAttribute("src", v)
+			img.setAttribute("style", "vertical-align: bottom; height: 1em;")
+			header.insertAdjacentElement("afterbegin", img)
+		})
+		// Create description
+		var desc = this.element.appendChild(document.createElement("p"))
+		desc.innerText = this.itemData.description
+		// Create buttons
+		var btn_container = this.element.appendChild(document.createElement("div"))
+		for (var button of item.buttons) {
+			let e = btn_container.appendChild(document.createElement("span"))
+			let e2 = e.appendChild(document.createElement("button"))
+			e2.innerText = button.name
+			// Clickable
+			e.addEventListener("click", (() => {
+				// find index
+				var index = [...(e.parentNode?.children ?? [])].indexOf(e)
+				if (index == -1) return
+				// send click
+				Utils.post("/click_btn", JSON.stringify({
+					clientID: this.parent.clientID,
+					itemIndex: this.parent.player.inventory.indexOf(this.item),
+					buttonIndex: index
+				})).then((() => {
+					this.parent.getMessagesFromServer()
+				}).bind(this))
+				// remove menus
+				this.remove()
+				this.parent.remove()
+			}).bind(this))
 		}
 	}
 }
@@ -1030,6 +1099,11 @@ class Main {
 			for (var i = 1; i < message.length; i++) {
 				var item = Item.create(JSON.parse(message[i]))
 				inventory.push(item)
+			}
+		} else if (message[0] == "set_main_hand") {
+			this.game.me.mainHand = null
+			if (message[1].length > 0) {
+				this.game.me.mainHand = Item.create(JSON.parse(message[1]))
 			}
 		} else {
 			console.log("Unknown message!", message)

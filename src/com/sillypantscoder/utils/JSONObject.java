@@ -2,6 +2,7 @@ package com.sillypantscoder.utils;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -229,7 +230,7 @@ public class JSONObject {
 	public void setBoolean(String name, boolean value) { this.entries_boolean.put(name, value); }
 	public void setNumber(String name, double value) { this.entries_number.put(name, value); }
 	public void setString(String name, String value) { this.entries_string.put(name, value); }
-	public void setArray(String name, ArrayList<Object> value) { this.entries_array.put(name, value); }
+	public void setArray(String name, Collection<? extends Object> value) { this.entries_array.put(name, new ArrayList<Object>(value)); }
 	public void setObject(String name, JSONObject value) { this.entries_object.put(name, value); }
 	// HELPER FUNCTIONS
 	public static String encode2DList(List<? extends List<String>> list) {

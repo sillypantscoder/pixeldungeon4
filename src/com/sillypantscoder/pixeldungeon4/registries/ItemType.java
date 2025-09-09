@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.sillypantscoder.pixeldungeon4.items.ItemButton;
 import com.sillypantscoder.utils.JSONObject;
 import com.sillypantscoder.utils.Utils;
 
@@ -39,16 +40,5 @@ public class ItemType {
 			types.put(name.split("\\.")[0], type);
 		}
 		return types;
-	}
-	public static record ItemButton(String name, ArrayList<JSONObject> actions) {
-		public static ItemButton create(JSONObject object) {
-			ArrayList<JSONObject> actions = new ArrayList<JSONObject>();
-			for (Object data : object.getArray("actions")) {
-				if (data instanceof JSONObject jsonData) {
-					actions.add(jsonData);
-				} else throw new RuntimeException("Item button action object is of the wrong type");
-			}
-			return new ItemButton(object.getString("name"), actions);
-		}
 	}
 }

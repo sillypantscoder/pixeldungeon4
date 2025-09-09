@@ -8,6 +8,6 @@
 	</head>
 	<body>
 		<canvas id="level"></canvas>
-		<aside id="menu-bottom-right"><button class="inventory-button" onclick="Menu.show(new InventoryMenu(main.game.assets, main.game.me))"></button></aside>
+		<aside id="menu-bottom-right"><button class="inventory-button" onclick="Menu.show(new InventoryMenu(main.game.assets, main.clientID, main.game.me, main.getMessagesFromServer.bind(main)))"></button></aside>
 	</body>
 </html>

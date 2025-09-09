@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 import com.sillypantscoder.http.HttpResponse;
 import com.sillypantscoder.http.HttpServer;
 import com.sillypantscoder.pixeldungeon4.entities.Player;
+import com.sillypantscoder.pixeldungeon4.items.Item;
+import com.sillypantscoder.pixeldungeon4.items.ItemButton;
 import com.sillypantscoder.utils.JSONObject;
 import com.sillypantscoder.utils.Utils;
 
@@ -50,6 +52,21 @@ public class MainServer extends HttpServer.RequestHandler {
 			if (! game.players.containsKey(bodyData[0])) return new HttpResponse().setStatus(400).setBody("That player is not logged in");
 			Player player = game.getPlayerByID(bodyData[0]);
 			player.setTarget(game.level, Integer.valueOf(bodyData[1]), Integer.valueOf(bodyData[2]));
+			return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/plain");
+		}
+		if (path.equals("/click_btn")) {
+			JSONObject object = JSONObject.create(body);
+			// Find player
+			if (! game.players.containsKey(object.getString("clientID"))) return new HttpResponse().setStatus(400).setBody("That player is not logged in");
+			Player player = game.getPlayerByID(object.getString("clientID"));
+			// Find button
+			Item item;
+			if (object.getNumber("itemIndex") == -1) item = player.mainHand.orElseThrow();
+			else item = player.inventory.get((int)(object.getNumber("itemIndex")));
+			ItemButton btn = item.getButton((int)(object.getNumber("buttonIndex")));
+			// Click button
+			btn.click(game, player, (int)(object.getNumber("itemIndex")));
+			// Return response
 			return new HttpResponse().setStatus(200).addHeader("Content-Type", "text/plain");
 		}
 		return new HttpResponse().setStatus(404).setBody("POST path not found");
