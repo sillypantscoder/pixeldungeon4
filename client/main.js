@@ -394,6 +394,47 @@ class Actor {
 		return new Actor(new SpritesheetDisplay(spritesImage, spritesData.tileSize, spritesData.animations, spritesData.initialAnimation), x, y)
 	}
 }
+class BouncingActor extends Actor {
+	static MAX_TIME = 30;
+	static BOUNCE_HEIGHT = 0.4;
+	/**
+	 * @param {SpritesheetDisplay} sprites
+	 * @param {number} x
+	 * @param {number} y
+	 */
+	constructor(sprites, x, y) {
+		super(sprites, x, y)
+		this.time = 0;
+		this.originalY = y;
+	}
+	/**
+	 * @param {number} targetX
+	 * @param {number} targetY
+	 */
+	moveFrame(targetX, targetY) {
+		if (this.time > BouncingActor.MAX_TIME) {
+			super.moveFrame(targetX, targetY)
+		} else {
+			// Bounce!
+			this.y = this.originalY - (
+				(4 * BouncingActor.BOUNCE_HEIGHT * this.time / BouncingActor.MAX_TIME)
+				* (1 - (this.time / BouncingActor.MAX_TIME))
+			)
+			this.time += 1
+		}
+	}
+	/**
+	 * @param {string} entityID
+	 * @param {AssetManager} assets
+	 * @param {number} x
+	 * @param {number} y
+	 */
+	static createForEntityID(entityID, assets, x, y) {
+		var spritesImage = assets.getTexture("entity", entityID)
+		var spritesData = assets.assets.definitions.entity_spritesheets[entityID]
+		return new BouncingActor(new SpritesheetDisplay(spritesImage, spritesData.tileSize, spritesData.animations, spritesData.initialAnimation), x, y)
+	}
+}
 class Entity {
 	/**
 	 * @param {number} id
@@ -431,7 +472,15 @@ class Entity {
 		return this.actor.sprites.getFrame()
 	}
 }
-class Dewdrop extends Entity {
+class BouncingEntity extends Entity {
+	/**
+	 * @param {AssetManager} assets
+	 */
+	createActor(assets) {
+		return BouncingActor.createForEntityID(this.getEntityID(), assets, this.x, this.y)
+	}
+}
+class Dewdrop extends BouncingEntity {
 	/**
 	 * @param {number} id
 	 * @param {number} x
@@ -445,7 +494,7 @@ class Dewdrop extends Entity {
 	 */
 	getEntityID() { return "dewdrop"; }
 }
-class DroppedItem extends Entity {
+class DroppedItem extends BouncingEntity {
 	/**
 	 * @param {number} id
 	 * @param {number} x
@@ -464,8 +513,9 @@ class DroppedItem extends Entity {
 	 * @param {AssetManager} assets
 	 */
 	createActor(assets) {
+		// (This class only semantically extends BouncingEntity)
 		var sprites = this.item.createSpritesheet(assets);
-		var actor = new Actor(sprites, this.x, this.y);
+		var actor = new BouncingActor(sprites, this.x, this.y);
 		return actor;
 	}
 }
