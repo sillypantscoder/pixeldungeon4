@@ -3,15 +3,28 @@
 	"type": "object",
 	"properties": {
 		"health": { "$ref": "definitions.json#/properties/number_provider" },
+		"damage": { "$ref": "definitions.json#/properties/number_provider" },
 		"behavior": {
 			"type": "array",
 			"items": {
 				"$ref": "definitions.json#/properties/behavior"
 			}
+		},
+		"loot": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"properties": {
+					"item": { "type": "string" },
+					"weight": { "type": "number" }
+				}
+			}
 		}
 	},
 	"required": [
 		"health",
-		"behavior"
+		"damage",
+		"behavior",
+		"loot"
 	]
 }

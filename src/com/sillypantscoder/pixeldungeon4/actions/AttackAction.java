@@ -16,7 +16,7 @@ public class AttackAction extends Action<LivingEntity> {
 			return;
 		}
 		// Decrease entity health
-		this.target.health -= this.entity.getDamage();
+		this.target.health -= this.entity.getDamage(game.level);
 		// Update time
 		this.entity.time += this.time;
 		// Inform clients about this update

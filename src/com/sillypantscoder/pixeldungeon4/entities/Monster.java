@@ -1,12 +1,15 @@
 package com.sillypantscoder.pixeldungeon4.entities;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
+import com.sillypantscoder.pixeldungeon4.Game;
 import com.sillypantscoder.pixeldungeon4.actions.Action;
 import com.sillypantscoder.pixeldungeon4.entitydef.BehaviorCommand;
 import com.sillypantscoder.pixeldungeon4.entitydef.CommandResult;
 import com.sillypantscoder.pixeldungeon4.entitydef.MonsterSituation;
+import com.sillypantscoder.pixeldungeon4.items.Item;
 import com.sillypantscoder.pixeldungeon4.level.Level;
 import com.sillypantscoder.pixeldungeon4.registries.MonsterType;
 import com.sillypantscoder.utils.Random;
@@ -45,5 +48,12 @@ public class Monster extends LivingEntity {
 		}
 		throw new RuntimeException("Entity behavior didn't return an action! Entity: " + this.typeID);
 	}
-	public int getDamage() { return Random.randint(1, 4); }
+	public int getDamage(Level level) { return (int)(MonsterType.allMonsterTypes.get(typeID).damage.get(new MonsterSituation(level, this, target))); }
+	public void onDeath(Game game) {
+		ArrayList<MonsterType.LootTableItem> lootTable = MonsterType.allMonsterTypes.get(typeID).loot;
+		List<Double> weights = lootTable.stream().map((v) -> v.weight()).toList();
+		String selectedItem = Random.choice(lootTable, weights).item();
+		if (selectedItem.equals("")) return;
+		game.addFreshEntity(new DroppedItem(game.level.getNewEntityTime(), x, y, new Item(selectedItem)));
+	}
 }

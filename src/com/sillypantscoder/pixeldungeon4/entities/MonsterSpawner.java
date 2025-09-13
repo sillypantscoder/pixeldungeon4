@@ -16,9 +16,9 @@ public class MonsterSpawner extends Entity {
 	}
 	public Optional<Action<?>> getAction(Level level) {
 		long numberOfEntities = level.entities.stream().filter((v) -> v instanceof TileEntity).count();
-		if (Math.random() * 64 < numberOfEntities) {
+		if (Math.random() * 48 < numberOfEntities) {
 			WaitAction action = new WaitAction(this);
-			action.time = 128;
+			action.time = 128 + (int)(numberOfEntities * 3);
 			return Optional.of(action);
 		}
 		return Optional.of(new SpawnMonster(this, "rat"));

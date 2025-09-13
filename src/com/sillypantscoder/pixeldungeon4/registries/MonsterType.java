@@ -11,10 +11,14 @@ import com.sillypantscoder.utils.Utils;
 
 public class MonsterType {
 	public NumberProvider health;
+	public NumberProvider damage;
 	public ArrayList<BehaviorCommand> behavior;
-	public MonsterType(NumberProvider health, ArrayList<BehaviorCommand> behavior) {
+	public ArrayList<LootTableItem> loot;
+	public MonsterType(NumberProvider health, NumberProvider damage, ArrayList<BehaviorCommand> behavior, ArrayList<LootTableItem> loot) {
 		this.health = health;
+		this.damage = damage;
 		this.behavior = behavior;
+		this.loot = loot;
 	}
 	public static HashMap<String, MonsterType> allMonsterTypes = getAllMonsterTypes();
 	public static HashMap<String, MonsterType> getAllMonsterTypes() {
@@ -24,6 +28,8 @@ public class MonsterType {
 			// Unpack JSON object
 			// - Health
 			NumberProvider healthProvider = NumberProvider.create(object, "health");
+			// - Damage
+			NumberProvider damageProvider = NumberProvider.create(object, "damage");
 			// - Behavior
 			ArrayList<BehaviorCommand> behavior = new ArrayList<BehaviorCommand>();
 			for (Object o : object.getArray("behavior")) {
@@ -33,10 +39,24 @@ public class MonsterType {
 					throw new RuntimeException("Behavior command is of the wrong type: " + o.toString());
 				}
 			}
+			// - Loot
+			ArrayList<LootTableItem> loot = new ArrayList<LootTableItem>();
+			for (Object o : object.getArray("loot")) {
+				if (o instanceof JSONObject cmd) {
+					loot.add(LootTableItem.create(cmd));
+				} else {
+					throw new RuntimeException("Behavior command is of the wrong type: " + o.toString());
+				}
+			}
 			// Assemble MonsterType object
-			MonsterType type = new MonsterType(healthProvider, behavior);
+			MonsterType type = new MonsterType(healthProvider, damageProvider, behavior, loot);
 			types.put(name.split("\\.")[0], type);
 		}
 		return types;
+	}
+	public static record LootTableItem(String item, double weight) {
+		public static LootTableItem create(JSONObject object) {
+			return new LootTableItem(object.getString("item"), object.getNumber("weight"));
+		}
 	}
 }

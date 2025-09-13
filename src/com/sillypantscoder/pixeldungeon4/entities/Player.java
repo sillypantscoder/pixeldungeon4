@@ -161,7 +161,7 @@ public class Player extends LivingEntity {
 		}
 		this.sendVision(level);
 	}
-	public int getDamage() { return Random.randint(1, 5); }
+	public int getDamage(Level level) { return Random.randint(1, 5); }
 	public ArrayList<Item> getAllInventoryItems() {
 		ArrayList<Item> items = super.getAllInventoryItems();
 		items.addAll(this.inventory);

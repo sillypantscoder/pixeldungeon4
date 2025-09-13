@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.sillypantscoder.pixeldungeon4.Game;
 import com.sillypantscoder.pixeldungeon4.items.Item;
+import com.sillypantscoder.pixeldungeon4.level.Level;
 import com.sillypantscoder.utils.JSONObject;
 
 public abstract class LivingEntity extends TileEntity {
@@ -17,10 +18,8 @@ public abstract class LivingEntity extends TileEntity {
 		this.maxHealth = health;
 		this.mainHand = Optional.empty();
 	}
-	public abstract int getDamage();
-	public void onDeath(Game game) {
-		game.addFreshEntity(new DroppedItem(game.level.getNewEntityTime(), x, y, new Item("food")));
-	}
+	public abstract int getDamage(Level level);
+	public void onDeath(Game game) {}
 	public ArrayList<Item> getAllInventoryItems() {
 		ArrayList<Item> items = new ArrayList<Item>();
 		this.mainHand.ifPresent((v) -> {
