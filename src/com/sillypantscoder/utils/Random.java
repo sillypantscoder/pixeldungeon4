@@ -34,6 +34,7 @@ public class Random {
 		return items[randint(0, items.length - 1)];
 	}
 	public static<T> T choice(List<T> items) {
+		if (items.size() == 0) throw new IndexOutOfBoundsException("Cannot choose from empty list");
 		return items.get(randint(0, items.size() - 1));
 	}
 	public static<T> T choice(List<T> items, List<Double> weights) {

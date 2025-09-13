@@ -34,11 +34,23 @@ public class Level {
 		ArrayList<int[]> possibleSpawns = new ArrayList<int[]>();
 		for (int x = 0; x < this.tiles.length; x++) {
 			for (int y = 0; y < this.tiles[0].length; y++) {
-				if (tiles[x][y].getData().collisionType == TileType.CollisionType.NORMAL) {
+				if (tiles[x][y].getData().collisionType.walkable) {
 					possibleSpawns.add(new int[] { x, y });
 				}
 			}
 		}
+		return Random.choice(possibleSpawns);
+	}
+	public int[] getSpawnPointForPlayer() {
+		ArrayList<int[]> possibleSpawns = new ArrayList<int[]>();
+		for (int x = 0; x < this.tiles.length; x++) {
+			for (int y = 0; y < this.tiles[0].length; y++) {
+				if (tiles[x][y].getData().collisionType.equals(TileType.CollisionType.LEVEL_ENTRY)) {
+					possibleSpawns.add(new int[] { x, y });
+				}
+			}
+		}
+		if (possibleSpawns.size() == 0) return getSpawnPoint();
 		return Random.choice(possibleSpawns);
 	}
 	public int getNewEntityTime() {
@@ -88,7 +100,7 @@ public class Level {
 		for (int x = 0; x < this.tiles.length; x++) {
 			for (int y = 0; y < this.tiles[0].length; y++) {
 				Tile state = this.tiles[x][y];
-				boolean canWalkOn = state.getData().collisionType == TileType.CollisionType.NORMAL;
+				boolean canWalkOn = state.getData().collisionType.walkable;
 				board[x][y] = canWalkOn ? 1 : 0;
 			}
 		}

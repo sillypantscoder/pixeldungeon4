@@ -18,10 +18,14 @@ public class MonsterSpawner extends Entity {
 		long numberOfEntities = level.entities.stream().filter((v) -> v instanceof TileEntity).count();
 		if (Math.random() * 48 < numberOfEntities) {
 			WaitAction action = new WaitAction(this);
-			action.time = 128 + (int)(numberOfEntities * 3);
+			action.time = 192;
 			return Optional.of(action);
 		}
-		return Optional.of(new SpawnMonster(this, "rat"));
+		{
+			SpawnMonster action = new SpawnMonster(this, "rat");
+			action.time += 64 * (int)(numberOfEntities);
+			return Optional.of(action);
+		}
 	}
 	public static class SpawnMonster extends Action<MonsterSpawner> {
 		public String monsterType;

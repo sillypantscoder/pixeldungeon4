@@ -8,7 +8,6 @@ import com.sillypantscoder.pixeldungeon4.entities.Entity;
 import com.sillypantscoder.pixeldungeon4.entities.PathfindingTarget;
 import com.sillypantscoder.pixeldungeon4.entities.TileEntity;
 import com.sillypantscoder.pixeldungeon4.level.Tile;
-import com.sillypantscoder.pixeldungeon4.registries.TileType;
 import com.sillypantscoder.utils.JSONObject;
 import com.sillypantscoder.utils.Random;
 
@@ -65,7 +64,7 @@ public abstract class BehaviorCommand {
 				if (x < 0 || y < 0 || x >= situation.level.tiles.length || y >= situation.level.tiles[0].length) continue;
 				// Verify that this tile is walkable
 				Tile tile = situation.level.getTile(x, y);
-				if (tile.getData().collisionType != TileType.CollisionType.NORMAL) continue;
+				if (! tile.getData().collisionType.walkable) continue;
 				// Verify that the tile is visible from the entity's position
 				if (! situation.level.isLocVisible(situation.self.x, situation.self.y, x, y)) continue;
 				// Verify that it is possible to pathfind to the tile

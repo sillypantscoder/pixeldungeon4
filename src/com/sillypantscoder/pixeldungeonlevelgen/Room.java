@@ -2,14 +2,17 @@ package com.sillypantscoder.pixeldungeonlevelgen;
 
 import java.util.ArrayList;
 
+import com.sillypantscoder.pixeldungeon4.level.Level;
 import com.sillypantscoder.utils.Random;
 import com.sillypantscoder.utils.Rect;
 
 public class Room extends AbstractRoom {
 	public Rect rect;
+	public RoomType type;
 	public Room(Rect rect) {
 		super();
 		this.rect = rect;
+		this.type = RoomType.NORMAL;
 	}
 	public static Room generateOnDoor(Door d, int width, int height) {
 		Direction direction = d.freeDirection.orElseThrow();
@@ -56,6 +59,9 @@ public class Room extends AbstractRoom {
 		for (int i = 0; i < amount; i++) {
 			this.addDoor();
 		}
+	}
+	public void drawDecorations(Level level) {
+		this.type.drawDecoration(level, this.rect.x + (this.rect.w / 2), this.rect.y + (this.rect.h / 2));
 	}
 	public void move(int dx, int dy) {
 		super.move(dx, dy);

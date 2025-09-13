@@ -24,7 +24,11 @@ public class TileType {
 		this.onLeave = onLeave;
 	}
 	public static enum CollisionType {
-		NONE, NORMAL, WALL
+		NONE(false), NORMAL(true), LEVEL_ENTRY(true), LEVEL_EXIT(true), WALL(false);
+		public boolean walkable;
+		private CollisionType(boolean walkable) {
+			this.walkable = walkable;
+		}
 	}
 	public static HashMap<String, TileType> allTileTypes = getAllTileTypes();
 	public static HashMap<String, TileType> getAllTileTypes() {
@@ -36,6 +40,8 @@ public class TileType {
 			String collisionTypeString = object.getString("collisionType");
 			CollisionType collisionType = CollisionType.NONE;
 			if (collisionTypeString.equals("none")) collisionType = CollisionType.NONE;
+			else if (collisionTypeString.equals("level-entry")) collisionType = CollisionType.LEVEL_ENTRY;
+			else if (collisionTypeString.equals("level-exit")) collisionType = CollisionType.LEVEL_EXIT;
 			else if (collisionTypeString.equals("normal")) collisionType = CollisionType.NORMAL;
 			else if (collisionTypeString.equals("wall")) collisionType = CollisionType.WALL;
 			else System.err.println("Invalid collision type for tile: " + name);
@@ -60,6 +66,15 @@ public class TileType {
 			types.put(name.split("\\.")[0], type);
 		}
 		return types;
+	}
+	public static ArrayList<String> findTilesWithCollisionType(CollisionType collisionType) {
+		ArrayList<String> validTiles = new ArrayList<String>();
+		for (String name : allTileTypes.keySet()) {
+			if (allTileTypes.get(name).collisionType.equals(collisionType)) {
+				validTiles.add(name);
+			}
+		}
+		return validTiles;
 	}
 	public static void doAction(JSONObject data, Game game, int x, int y) {
 		if (data.getString("type").equals("change-tile")) {

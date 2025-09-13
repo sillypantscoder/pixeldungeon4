@@ -62,6 +62,7 @@ public abstract class AbstractRoom {
 			level.tiles[d.x][d.y].state = "door_closed";
 		}
 	}
+	public void drawDecorations(Level level) {}
 	public abstract boolean isValid(boolean strict);
 	public abstract int[][] getCoveredPositions();
 	public boolean intersectsWith(AbstractRoom other) {
@@ -76,6 +77,6 @@ public abstract class AbstractRoom {
 	}
 	public static AbstractRoom generateOnDoor(Door door) {
 		if (Math.random() < 0.4 && door.canConnectToCorridor) return Corridor.generateOnDoor(door);
-		return Room.generateOnDoor(door, (int)(Random.triangular(3, 8, 9)), (int)(Random.triangular(3, 8, 9)));
+		return Room.generateOnDoor(door, (int)(Random.triangular(4, 8, 9)), (int)(Random.triangular(4, 8, 9)));
 	}
 }

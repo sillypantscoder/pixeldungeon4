@@ -14,7 +14,7 @@
 		{
 			"type": "spawn-entity",
 			"spawn_chances": [
-				{ "entity": null, "weight": 1 },
+				{ "entity": null, "weight": 2 },
 				{ "entity": "dewdrop", "weight": 1 }
 			]
 		}

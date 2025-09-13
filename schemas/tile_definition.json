@@ -4,7 +4,7 @@
 	"properties": {
 		"collisionType": {
 			"type": "string",
-			"enum": ["none", "normal", "wall"]
+			"enum": ["none", "normal", "level-entry", "level-exit", "wall"]
 		},
 		"canSeeThrough": {
 			"type": "boolean"

@@ -87,7 +87,7 @@ public class Game {
 		throw new RuntimeException("Player with ID '" + playerID + "' not found");
 	}
 	public Player createPlayerEntity(String playerID) {
-		int[] spawnPoint = this.level.getSpawnPoint();
+		int[] spawnPoint = this.level.getSpawnPointForPlayer();
 		return new Player(playerID, this.level.getNewEntityTime(), spawnPoint[0], spawnPoint[1], null);
 	}
 	public Monster createMonsterEntity(String monsterID) {

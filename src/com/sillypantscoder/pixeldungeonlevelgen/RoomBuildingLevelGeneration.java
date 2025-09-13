@@ -28,14 +28,6 @@ public class RoomBuildingLevelGeneration {
 			System.out.println();
 		}
 	}
-	public static class Pair<A, B> {
-		public A a;
-		public B b;
-		public Pair(A a, B b) {
-			this.a = a;
-			this.b = b;
-		}
-	}
 	public static void createPatchOval(Level l, String[] replaceables, String[] rare_replaceables, String tile, double cx, double cy, double w, double h) {
 		for (int x = 0; x < l.tiles.length; x++) {
 			for (int y = 0; y < l.tiles.length; y++) {
@@ -66,7 +58,7 @@ public class RoomBuildingLevelGeneration {
 			);
 		}
 	}
-	public static Level generateLevel(int worldSize) {
+	public static ArrayList<AbstractRoom> generateRooms(int worldSize) {
 		// Stop generating doors after we've generated a lot of rooms
 		AtomicReference<Double> doorsLeft = new AtomicReference<Double>(worldSize / 2d);
 		Supplier<Integer> getNumberOfDoors = () -> {
@@ -146,6 +138,43 @@ public class RoomBuildingLevelGeneration {
 				rooms.remove(r);
 			}
 		}
+		// Find start and end rooms
+		{
+			ArrayList<Room> candidates = new ArrayList<Room>();
+			for (AbstractRoom r : rooms) {
+				if (r instanceof Room r2) candidates.add(r2);
+			}
+			// Reference room
+			Room centerRoom = Random.choice(candidates);
+			// Start room
+			ArrayList<Double> weights = new ArrayList<Double>();
+			for (Room r : candidates) {
+				double distanceX = (r.rect.x + (r.rect.w / 2)) - (centerRoom.rect.x + (centerRoom.rect.w / 2));
+				double distanceY = (r.rect.y + (r.rect.h / 2)) - (centerRoom.rect.y + (centerRoom.rect.h / 2));
+				double distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+				weights.add(distanceSquared);
+			}
+			Room startingRoom = Random.choice(candidates, weights);
+			// Setup start room
+			startingRoom.type = RoomType.ENTRY;
+			candidates.remove(startingRoom);
+			// End room
+			weights = new ArrayList<Double>();
+			for (Room r : candidates) {
+				double distanceX = (r.rect.x + (r.rect.w / 2)) - (startingRoom.rect.x + (startingRoom.rect.w / 2));
+				double distanceY = (r.rect.y + (r.rect.h / 2)) - (startingRoom.rect.y + (startingRoom.rect.h / 2));
+				double distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+				weights.add(distanceSquared);
+			}
+			Room endingRoom = Random.choice(candidates, weights);
+			// Setup end room
+			endingRoom.type = RoomType.EXIT;
+		}
+		// Return room list
+		return rooms;
+	}
+	public static Level generateLevel(int worldSize) {
+		ArrayList<AbstractRoom> rooms = generateRooms(worldSize);
 		// Move rooms so no coordinates are negative
 		{
 			int minX = 0;
@@ -189,6 +218,9 @@ public class RoomBuildingLevelGeneration {
 					createGrassPatch(level, pos[0], pos[1]);
 				}
 			}
+		}
+		for (AbstractRoom r : rooms) {
+			r.drawDecorations(level);
 		}
 		// Finish
 		return level;
