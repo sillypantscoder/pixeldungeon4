@@ -848,6 +848,7 @@ class Game {
 				column.push(cell)
 			}
 		}
+		this.entities = []
 	}
 	/**
 	 * @param {number} x1
@@ -1091,11 +1092,15 @@ class Main {
 		} else if (message[0] == "remove_entity") {
 			var entity = this.game.getEntityByID(Number(message[1]))
 			if (entity == null) throw new Error("Can't remove nonexistent entity")
+			// Wait for animation to finish
+			while (entity.x != entity.actor?.x || entity.y != entity.actor?.y) await new Promise((resolve) => requestAnimationFrame(resolve))
+			// Remove entity
 			this.game.entities.splice(this.game.entities.indexOf(entity), 1)
 		} else if (message[0] == "clear_target") {
 			this.game.me.target = null
 		} else if (message[0] == "set_animation") {
 			var entity = this.game.getEntityByID(Number(message[1]))
+			if (entity == null && this.game.me.id == Number(message[1])) return;
 			if (entity == null) throw new Error("Can't set animation of nonexistent entity")
 			entity.actor?.setAnimation(message[2])
 		} else if (message[0] == "set_health") {
@@ -1155,6 +1160,29 @@ class Main {
 			if (message[1].length > 0) {
 				this.game.me.mainHand = Item.create(JSON.parse(message[1]))
 			}
+		} else if (message[0] == "descending") {
+			// Wait for animation to finish
+			while (this.game.entities.map((e) => e.x != e.actor?.x || e.y != e.actor?.y).reduce((a, b) => a || b, false)) await new Promise((resolve) => requestAnimationFrame(resolve))
+			// Create dialog
+			var container = document.body.appendChild(document.createElement("div"))
+			container.classList.add("menu")
+			container.setAttribute("style", "background: black;")
+			var text = container.appendChild(document.createElement("span"))
+			text.innerText = "Descending..."
+			text.setAttribute("style", "opacity: 0;")
+			requestAnimationFrame(() => {
+				text.setAttribute("style", "opacity: 1; transition: opacity 0.5s ease-out;")
+				setTimeout(() => {
+					text.setAttribute("style", "opacity: 0; transition: opacity 0.5s ease-in;")
+					setTimeout(() => {
+						text.remove()
+						container.setAttribute("style", "background: black; opacity: 0; transition: opacity 1.5s ease-in-out;")
+						setTimeout(() => {
+							container.remove()
+						}, 1500)
+					}, 500)
+				}, 500)
+			})
 		} else {
 			console.log("Unknown message!", message)
 		}

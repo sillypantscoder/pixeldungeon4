@@ -151,23 +151,25 @@ public class RoomBuildingLevelGeneration {
 			for (Room r : candidates) {
 				double distanceX = (r.rect.x + (r.rect.w / 2)) - (centerRoom.rect.x + (centerRoom.rect.w / 2));
 				double distanceY = (r.rect.y + (r.rect.h / 2)) - (centerRoom.rect.y + (centerRoom.rect.h / 2));
-				double distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+				double distanceSquared = ((distanceX * distanceX) + (distanceY * distanceY)) + 0.001;
 				weights.add(distanceSquared);
 			}
 			Room startingRoom = Random.choice(candidates, weights);
 			// Setup start room
 			startingRoom.type = RoomType.ENTRY;
 			candidates.remove(startingRoom);
+			if (candidates.size() == 0) throw new RuntimeException("Level generation failed because the level does not have enough rooms!");
 			// End room
 			weights = new ArrayList<Double>();
 			for (Room r : candidates) {
 				double distanceX = (r.rect.x + (r.rect.w / 2)) - (startingRoom.rect.x + (startingRoom.rect.w / 2));
 				double distanceY = (r.rect.y + (r.rect.h / 2)) - (startingRoom.rect.y + (startingRoom.rect.h / 2));
-				double distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+				double distanceSquared = ((distanceX * distanceX) + (distanceY * distanceY)) + 0.001;
 				weights.add(distanceSquared);
 			}
 			Room endingRoom = Random.choice(candidates, weights);
 			// Setup end room
+			if (startingRoom == endingRoom) throw new RuntimeException("Level generation failed because the level does not have enough rooms!");
 			endingRoom.type = RoomType.EXIT;
 		}
 		// Return room list

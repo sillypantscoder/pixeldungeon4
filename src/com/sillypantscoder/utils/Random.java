@@ -40,6 +40,7 @@ public class Random {
 	public static<T> T choice(List<T> items, List<Double> weights) {
 		if (items.size() != weights.size()) throw new IllegalArgumentException("Items and weights must be the same size");
 		double totalWeight = weights.stream().mapToDouble(Double::doubleValue).sum();
+		if (totalWeight <= 0) throw new IndexOutOfBoundsException("Total weights must be greater than 0");
 		double r = randfloat(0, totalWeight);
 		double cumulativeWeight = 0;
 		for (int i = 0; i < items.size(); i++) {

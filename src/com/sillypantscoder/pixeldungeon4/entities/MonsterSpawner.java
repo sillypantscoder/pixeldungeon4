@@ -38,21 +38,9 @@ public class MonsterSpawner extends Entity {
 			int[] spawnPoint = game.level.getSpawnPoint();
 			Monster newEntity = new Monster(monsterType, game.level.getNewEntityTime(), spawnPoint[0], spawnPoint[1]);
 			// Add to world
-			game.level.entities.add(newEntity);
+			game.addFreshEntity(newEntity);
 			// Increase time
 			this.entity.time += this.time;
-			// Send to clients
-			for (Player p : game.allPlayers()) {
-				if (game.level.isLocVisible(newEntity.x, newEntity.y, p.x, p.y)) {
-					// Create entity
-					p.visibleEntities.add(newEntity);
-					String[] data = new String[] {
-						"create_entity",
-						newEntity.serialize(false).toString()
-					};
-					p.sendMessage.accept(data);
-				}
-			}
 		}
 	}
 }

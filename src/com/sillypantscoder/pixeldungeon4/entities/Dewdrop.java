@@ -26,17 +26,7 @@ public class Dewdrop extends TileEntity {
 		}
 		public void execute(Game game) {
 			// Remove dewdrop
-			for (Player player : game.allPlayers()) {
-				if (game.level.isLocVisible(player.x, player.y, this.dewdrop.x, this.dewdrop.y)) {
-					// Send death
-					player.visibleEntities.remove(this.dewdrop);
-					player.sendMessage.accept(new String[] {
-						"remove_entity",
-						String.valueOf(this.dewdrop.id)
-					});
-				}
-			}
-			game.level.entities.remove(this.dewdrop);
+			game.removeEntity(this.dewdrop);
 			// Heal entity
 			this.entity.health += 2;
 			if (this.entity.health > this.entity.maxHealth) this.entity.health = this.entity.maxHealth;

@@ -35,17 +35,7 @@ public class DroppedItem extends TileEntity {
 		}
 		public void execute(Game game) {
 			// Remove item entity
-			for (Player player : game.allPlayers()) {
-				if (game.level.isLocVisible(player.x, player.y, this.item.x, this.item.y)) {
-					// Send death
-					player.visibleEntities.remove(this.item);
-					player.sendMessage.accept(new String[] {
-						"remove_entity",
-						String.valueOf(this.item.id)
-					});
-				}
-			}
-			game.level.entities.remove(this.item);
+			game.removeEntity(this.item);
 			// Add to inventory
 			if (this.entity instanceof Player targetPlayer) {
 				targetPlayer.inventory.add(this.item.item);

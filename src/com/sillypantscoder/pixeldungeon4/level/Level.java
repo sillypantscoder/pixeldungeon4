@@ -8,6 +8,8 @@ import com.sillypantscoder.pixeldungeon4.Game;
 import com.sillypantscoder.pixeldungeon4.actions.Action;
 import com.sillypantscoder.pixeldungeon4.entities.Entity;
 import com.sillypantscoder.pixeldungeon4.entities.LivingEntity;
+import com.sillypantscoder.pixeldungeon4.entities.Monster;
+import com.sillypantscoder.pixeldungeon4.entities.Player;
 import com.sillypantscoder.pixeldungeon4.registries.TileType;
 import com.sillypantscoder.utils.LinePoints;
 import com.sillypantscoder.utils.Pathfinding;
@@ -61,6 +63,14 @@ public class Level {
 			}
 		}
 		return minEntityTime + 1;
+	}
+	public Player createPlayerEntity(String playerID) {
+		int[] spawnPoint = this.getSpawnPointForPlayer();
+		return new Player(playerID, this.getNewEntityTime(), spawnPoint[0], spawnPoint[1], null);
+	}
+	public Monster createMonsterEntity(String monsterID) {
+		int[] spawnPoint = this.getSpawnPoint();
+		return new Monster(monsterID, this.getNewEntityTime(), spawnPoint[0], spawnPoint[1]);
 	}
 	/**
 	 * The next entity takes a turn.

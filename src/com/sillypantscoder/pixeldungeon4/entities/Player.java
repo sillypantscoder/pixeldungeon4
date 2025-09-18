@@ -10,6 +10,7 @@ import com.sillypantscoder.pixeldungeon4.actions.AttackAction;
 import com.sillypantscoder.pixeldungeon4.actions.MoveAction;
 import com.sillypantscoder.pixeldungeon4.items.Item;
 import com.sillypantscoder.pixeldungeon4.level.Level;
+import com.sillypantscoder.pixeldungeon4.registries.TileType;
 import com.sillypantscoder.utils.JSONObject;
 import com.sillypantscoder.utils.Random;
 
@@ -17,6 +18,7 @@ public class Player extends LivingEntity {
 	public String playerID;
 	public Optional<PathfindingTarget> target;
 	public Consumer<String[]> sendMessage;
+	public Runnable finishLevel;
 	public ArrayList<TileEntity> visibleEntities;
 	public int healingTime;
 	public ArrayList<Item> inventory;
@@ -25,6 +27,7 @@ public class Player extends LivingEntity {
 		this.playerID = playerID;
 		this.target = Optional.empty();
 		this.sendMessage = sendMessage;
+		this.finishLevel = null;
 		this.visibleEntities = new ArrayList<TileEntity>();
 		this.healingTime = time + 10;
 		this.inventory = new ArrayList<Item>();
@@ -153,13 +156,22 @@ public class Player extends LivingEntity {
 		}
 	}
 	public void afterMove(Level level) {
+		this.sendVision(level);
+		// If we have reached our target, and it's not an entity...
 		if (this.target.map((v) -> (this.x == v.getX()) && (this.y == v.getY()) && (! (v instanceof TileEntity))).orElse(false)) {
+			// Check for level completion
+			this.target.ifPresent((v) -> {
+				TileType tileState = level.tiles[v.getX()][v.getY()].getData();
+				if (tileState.collisionType == TileType.CollisionType.LEVEL_EXIT) {
+					// Finish the level
+					this.finishLevel.run();
+				}
+			});
 			// Clear player target
 			this.sendMessage.accept(new String[] { "clear_target" });
 			this.sendMessage.accept(new String[] { "set_animation", String.valueOf(this.id), "idle" });
 			this.target = Optional.empty();
 		}
-		this.sendVision(level);
 	}
 	public int getDamage(Level level) { return Random.randint(1, 5); }
 	public ArrayList<Item> getAllInventoryItems() {

@@ -7,7 +7,6 @@ import java.util.Map;
 
 import com.sillypantscoder.pixeldungeon4.entities.Entity;
 import com.sillypantscoder.pixeldungeon4.entities.LivingEntity;
-import com.sillypantscoder.pixeldungeon4.entities.Monster;
 import com.sillypantscoder.pixeldungeon4.entities.MonsterSpawner;
 import com.sillypantscoder.pixeldungeon4.entities.Player;
 import com.sillypantscoder.pixeldungeon4.entities.TileEntity;
@@ -20,19 +19,20 @@ public class Game {
 	public Level level;
 	public HashMap<String, PlayerData> players;
 	public Game() {
-		this.level = RoomBuildingLevelGeneration.generateLevel(45);
+		this.level = RoomBuildingLevelGeneration.generateLevel(5);
 		this.level.updateEntityHealth = this::updateEntityHealth;
 		this.players = new HashMap<String, PlayerData>();
-		// spawn some rats
-		this.addFreshEntity(this.createMonsterEntity("rat"));
-		this.addFreshEntity(this.createMonsterEntity("rat"));
+		// spawn some monsters
+		this.addFreshEntity(this.level.createMonsterEntity("rat"));
+		this.addFreshEntity(this.level.createMonsterEntity("rat"));
 		this.addFreshEntity(new MonsterSpawner(this.level.getNewEntityTime()));
 	}
 	public String loginPlayer() {
 		// Get player ID
 		String playerID = "P" + Random.randomInt();
 		// Create player entity
-		Player playerEntity = this.createPlayerEntity(playerID);
+		Player playerEntity = this.level.createPlayerEntity(playerID);
+		playerEntity.finishLevel = () -> this.playerFinishLevel(playerEntity);
 		this.addFreshEntity(playerEntity);
 		// Messages
 		players.put(playerID, new PlayerData(playerEntity));
@@ -86,14 +86,6 @@ public class Game {
 		}
 		throw new RuntimeException("Player with ID '" + playerID + "' not found");
 	}
-	public Player createPlayerEntity(String playerID) {
-		int[] spawnPoint = this.level.getSpawnPointForPlayer();
-		return new Player(playerID, this.level.getNewEntityTime(), spawnPoint[0], spawnPoint[1], null);
-	}
-	public Monster createMonsterEntity(String monsterID) {
-		int[] spawnPoint = this.level.getSpawnPoint();
-		return new Monster(monsterID, this.level.getNewEntityTime(), spawnPoint[0], spawnPoint[1]);
-	}
 	public void addFreshEntity(Entity e) {
 		// *Not related to Minecraft
 		this.level.entities.add(e);
@@ -107,6 +99,7 @@ public class Game {
 					tileEntity.serialize(p == e).toString()
 				};
 				p.sendMessage.accept(data);
+				p.visibleEntities.add(tileEntity);
 			}
 		}
 	}
@@ -117,7 +110,7 @@ public class Game {
 		}
 	}
 	public List<Player> allPlayers() {
-		return this.players.values().stream().map((v) -> v.player()).toList();
+		return this.players.values().stream().map((v) -> v.player).toList();
 	}
 	public void updateEntityHealth(LivingEntity e) {
 		if (e.health <= 0) {
@@ -147,6 +140,86 @@ public class Game {
 					});
 				}
 			}
+		}
+	}
+	public void removeEntity(Entity entity) {
+		if (entity instanceof TileEntity tileEntity) {
+			for (Player player : allPlayers()) {
+				if (player.visibleEntities.contains(tileEntity)) {
+					player.visibleEntities.remove(tileEntity);
+					String[] data = new String[] {
+						"remove_entity",
+						tileEntity.id + ""
+					};
+					player.sendMessage.accept(data);
+				}
+			}
+		}
+		this.level.entities.remove(entity);
+	}
+	public void playerFinishLevel(Player p) {
+		PlayerData data = this.players.get(p.playerID);
+		data.hasWon = true;
+		this.removeEntity(p);
+		// Check for level completion by all players
+		boolean levelCompleted = true;
+		for (PlayerData checkData : this.players.values()) {
+			if (this.level.entities.contains(checkData.player)) levelCompleted = false;
+		}
+		if (levelCompleted) {
+			// Winning players continue to next level
+			this.nextLevel();
+		}
+	}
+	public void nextLevel() {
+		for (Player player : allPlayers()) {
+			// Send "Descending..." message
+			player.sendMessage.accept(new String[] {
+				"descending"
+			});
+		}
+		// Generate level
+		this.level = RoomBuildingLevelGeneration.generateLevel(35);
+		this.level.updateEntityHealth = this::updateEntityHealth;
+		// Prepare players and clients for level
+		for (PlayerData player : this.players.values()) {
+			// Send new level size to client (also erases world)
+			player.sendMessage(new String[] {
+				"level_size",
+				String.valueOf(level.tiles[0].length),
+				String.valueOf(level.tiles.length)
+			});
+			// Set player position (so that entity creation works properly)
+			int[] spawnPos = this.level.getSpawnPointForPlayer();
+			player.player.x = spawnPos[0]; player.player.y = spawnPos[1];
+			player.player.time = 0;
+		}
+		// Add clients to new level
+		for (PlayerData player : this.players.values()) {
+			// Spawn player
+			this.addFreshEntity(player.player);
+			// Set me
+			player.sendMessage(new String[] {
+				"set_me",
+				String.valueOf(player.player.id)
+			});
+		}
+		// Spawn some monsters
+		this.addFreshEntity(this.level.createMonsterEntity("rat"));
+		this.addFreshEntity(this.level.createMonsterEntity("rat"));
+		this.addFreshEntity(this.level.createMonsterEntity("rat"));
+		this.addFreshEntity(this.level.createMonsterEntity("rat"));
+		this.addFreshEntity(this.level.createMonsterEntity("rat"));
+		this.addFreshEntity(this.level.createMonsterEntity("rat"));
+		this.addFreshEntity(this.level.createMonsterEntity("rat"));
+		this.addFreshEntity(this.level.createMonsterEntity("rat"));
+		this.addFreshEntity(this.level.createMonsterEntity("rat"));
+		this.addFreshEntity(this.level.createMonsterEntity("rat"));
+		this.addFreshEntity(new MonsterSpawner(this.level.getNewEntityTime()));
+		// Send new level data to all clients
+		for (PlayerData player : this.players.values()) {
+			// Vision
+			player.player.sendVision(level);
 		}
 	}
 }
